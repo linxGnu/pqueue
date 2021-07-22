@@ -17,6 +17,7 @@ import (
 )
 
 q, err := pqueue.New("your_path_to_store_data", 1000) // 1000 entries per segment
+defer q.Close() // it's important to close the queue before exit
 
 err := q.Enqueue([]byte{1,2,3,4})
 
