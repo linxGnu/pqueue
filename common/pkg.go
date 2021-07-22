@@ -57,8 +57,10 @@ var (
 	Endianese = binary.BigEndian
 )
 
+// ErrCode for internal use.
 type ErrCode int
 
+// Codes for internal user.
 const (
 	NoError ErrCode = iota
 
