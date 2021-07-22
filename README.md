@@ -1,12 +1,45 @@
-# pqueue
-Persistent queue
+# pqueue - a fast durable queue for Go
+
+[![](https://github.com/linxGnu/pqueue/workflows/Build/badge.svg)]()
+[![Go Report Card](https://goreportcard.com/badge/github.com/linxGnu/pqueue)](https://goreportcard.com/report/github.com/linxGnu/pqueue)
+[![Coverage Status](https://coveralls.io/repos/github/linxGnu/pqueue/badge.svg?branch=master)](https://coveralls.io/github/linxGnu/pqueue?branch=master)
+[![godoc](https://img.shields.io/badge/docs-GoDoc-green.svg)](https://godoc.org/github.com/linxGnu/pqueue)
+
+### Usage
+
+```go
+import (
+	"github.com/linxGnu/pqueue"
+        "github.com/linxGnu/pqueue/entry"
+)
+
+q, err := pqueue.New("your_path_to_store_data", 1000) // 1000 entries per segment
+
+err := q.Enqueue([]byte{1,2,3,4})
+
+var v entry.Entry 
+hasItem := q.Dequeue(&v)
+fmt.Println(v) // print: [1 2 3 4], v is []byte
+```
 
 ### Benchmark
 
+Hardware
 ```
-Hardware: Apple M1 16GB
+Macbook Air, Apple M1 16GB
 ```
 
+Comparing
+- github.com/joncrlsn/dque
+- github.com/grandecola/bigqueue
+
+```
+bigqueue.SetArenaSize(50<<20)
+bigqueue.SetMaxInMemArenas(5)
+bigqueue.SetPeriodicFlushOps(5)
+```
+
+Result
 ```
 goos: darwin
 goarch: arm64
