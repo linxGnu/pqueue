@@ -130,16 +130,13 @@ func (q *queue) Dequeue(dst *entry.Entry) bool {
 		case common.SegmentNoMoreReadWeak:
 			return false
 
-		case common.SegmentNoMoreReadStrong:
-			if q.removeSegment(front) { // is it tail of segment-list?
-				return false // no need to iterate more
+		default:
+			if code != common.SegmentNoMoreReadStrong {
+				head.corrupted = true
+				// TODO: write log here
 			}
 
-		default:
-			head.corrupted = true
-
-			// TODO: write log here
-			if q.removeSegment(front) { // is it tail of segment-list?
+			if q.removeSegment(front) {
 				return false // no need to iterate more
 			}
 		}
