@@ -26,7 +26,7 @@ func load(settings QueueSettings, segHeader segmentHeadWriter) (*queue, error) {
 		})
 	}
 
-	// create new segment for upcomming entries
+	// create new segment for upcoming entries
 	q := &queue{
 		settings:  settings,
 		segHeader: segHeader,

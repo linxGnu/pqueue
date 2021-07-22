@@ -79,6 +79,7 @@ func NewSegment(w io.WriteCloser, entryFormat common.EntryFormat, maxEntries uin
 	}, nil
 }
 
+// Close segment.
 func (s *Segment) Close() (err error) {
 	if s.r != nil {
 		err = s.r.Close()
@@ -103,6 +104,7 @@ func (s *Segment) Reading(source io.ReadCloser) (err error) {
 	return
 }
 
+// WriteEntry to segment.
 func (s *Segment) WriteEntry(e entry.Entry) (common.ErrCode, error) {
 	// check entry size
 	if len(e) == 0 {
@@ -132,6 +134,7 @@ func (s *Segment) writeEntry(e entry.Entry) (common.ErrCode, error) {
 	return code, err
 }
 
+// ReadEntry from segment.
 func (s *Segment) ReadEntry(e *entry.Entry) (common.ErrCode, error) {
 	s.rLock.Lock()
 	defer s.rLock.Unlock()
