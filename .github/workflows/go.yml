@@ -34,7 +34,7 @@ jobs:
           version: latest
 
       - name: Test Coverage
-        run: go test -v -count=1 -coverprofile=coverage.out ./...
+        run: go test -v -race -count=1 -coverprofile=coverage.out ./...
 
       - name: Convert coverage to lcov
         uses: jandelgado/gcov2lcov-action@v1.0.4
