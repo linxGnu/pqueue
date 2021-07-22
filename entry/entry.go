@@ -36,6 +36,7 @@ type Writer interface {
 // Entry represents queue entry.
 type Entry []byte
 
+// Marshal writes entry to writer.
 func (e Entry) Marshal(w io.Writer, format common.EntryFormat) (code common.ErrCode, err error) {
 	switch format {
 	case common.EntryV1:
@@ -77,6 +78,7 @@ func (e Entry) marshalV1(w io.Writer) (code common.ErrCode, err error) {
 	return
 }
 
+// Unmarshal from reader.
 func (e *Entry) Unmarshal(r io.Reader, format common.EntryFormat) (common.ErrCode, error) {
 	switch format {
 	case common.EntryV1:
