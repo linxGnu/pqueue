@@ -5,7 +5,9 @@
 [![Coverage Status](https://coveralls.io/repos/github/linxGnu/pqueue/badge.svg?branch=master)](https://coveralls.io/github/linxGnu/pqueue?branch=master)
 [![godoc](https://img.shields.io/badge/docs-GoDoc-green.svg)](https://godoc.org/github.com/linxGnu/pqueue)
 
-`pqueue` is thread-safety, serves environments where more durability is required (e.g., outages last longer than memory queues can sustain).
+`pqueue` is thread-safety, serves environments where more durability is required (e.g., outages last longer than memory queues can sustain)
+
+`pqueue` only consumes a bit of your memory. Most of the time, you are only bound to disk-size.
 
 ### Usage
 
