@@ -110,7 +110,7 @@ func TestNewSegment(t *testing.T) {
 func TestQueueRace(t *testing.T) {
 	size := 20000
 
-	dataDir := filepath.Join(tmpDir, "test")
+	dataDir := filepath.Join(tmpDir, "pqueue_race_test")
 	_ = os.RemoveAll(dataDir)
 
 	err := os.MkdirAll(dataDir, 0777)
@@ -213,4 +213,42 @@ func TestDequeue(t *testing.T) {
 
 		require.True(t, q.removeSegment(q.segments.PushBack(1)))
 	})
+}
+
+func TestQueueWriteLoad(t *testing.T) {
+	size := 20000
+
+	dataDir := filepath.Join(tmpDir, "pqueue_write_load")
+	_ = os.RemoveAll(dataDir)
+
+	err := os.MkdirAll(dataDir, 0777)
+	require.NoError(t, err)
+	defer os.RemoveAll(dataDir)
+
+	{
+		q, err := New(dataDir, 0)
+		require.NoError(t, err)
+
+		buf := make([]byte, 2<<10)
+		for data := 0; data < size; data++ {
+			common.Endianese.PutUint32(buf, uint32(data))
+			err := q.Enqueue(buf)
+			require.NoError(t, err)
+		}
+		_ = q.Close()
+	}
+
+	{
+		q, err := New(dataDir, 0)
+		require.NoError(t, err)
+
+		var e entry.Entry
+		for expect := 0; expect < size; expect++ {
+			require.True(t, q.Dequeue(&e))
+			require.EqualValues(t, expect, common.Endianese.Uint32(e))
+		}
+		require.False(t, q.Dequeue(&e))
+
+		_ = q.Close()
+	}
 }
