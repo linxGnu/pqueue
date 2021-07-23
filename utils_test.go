@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/linxGnu/pqueue/common"
+
 	"github.com/stretchr/testify/require"
 )
 

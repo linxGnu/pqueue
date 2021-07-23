@@ -22,6 +22,54 @@ const (
 	totalEntriesForRW = 5000
 )
 
+func BenchmarkPQueueWriting_16(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkPQueue(b, totalEntries, 16, false)
+	}
+}
+
+func BenchmarkDQueueWriting_16(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkDQueue(b, totalEntries, 16, false)
+	}
+}
+
+func BenchmarkBigQueueWriting_16(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkBigQueue(b, totalEntries, 16, false)
+	}
+}
+
+func BenchmarkPQueueWriting_64(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkPQueue(b, totalEntries, 64, false)
+	}
+}
+
+func BenchmarkDQueueWriting_64(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkDQueue(b, totalEntries, 64, false)
+	}
+}
+
+func BenchmarkBigQueueWriting_64(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkBigQueue(b, totalEntries, 64, false)
+	}
+}
+
 func BenchmarkPQueueWriting_256(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -91,6 +139,54 @@ func BenchmarkBigQueueWriting_16K(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		benchmarkBigQueue(b, totalEntries, 16<<10, false)
+	}
+}
+
+func BenchmarkPQueueRW_16(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkPQueue(b, totalEntries, 16, true)
+	}
+}
+
+func BenchmarkDQueueRW_16(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkDQueue(b, totalEntries, 16, true)
+	}
+}
+
+func BenchmarkBigQueueRW_16(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkBigQueue(b, totalEntries, 16, true)
+	}
+}
+
+func BenchmarkPQueueRW_64(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkPQueue(b, totalEntries, 64, true)
+	}
+}
+
+func BenchmarkDQueueRW_64(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkDQueue(b, totalEntries, 64, true)
+	}
+}
+
+func BenchmarkBigQueueRW_64(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		benchmarkBigQueue(b, totalEntries, 64, true)
 	}
 }
 
@@ -343,11 +439,7 @@ func benchmarkBigQueue(b *testing.B, size int, entrySize int, alsoRead bool) {
 		os.RemoveAll(dataDir)
 	}()
 
-	q, _ := bigqueue.NewMmapQueue(dataDir,
-		bigqueue.SetArenaSize(50<<20),
-		bigqueue.SetMaxInMemArenas(5),
-		bigqueue.SetPeriodicFlushOps(5),
-	)
+	q, _ := bigqueue.NewMmapQueue(dataDir)
 	defer q.Close()
 
 	b.StartTimer()

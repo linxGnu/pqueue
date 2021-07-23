@@ -3,6 +3,7 @@ package entry
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/linxGnu/pqueue/common"
@@ -83,6 +84,12 @@ type errorWriter struct{}
 
 func (e *errorWriter) Write([]byte) (int, error) { return 0, fmt.Errorf("fake error") }
 
+func (e *errorWriter) Flush() error { return nil }
+
+type noopFlusher struct{ io.Writer }
+
+func (f *noopFlusher) Flush() error { return nil }
+
 func TestEntryMarshal(t *testing.T) {
 	t.Run("UnsupportedFormat", func(t *testing.T) {
 		var e Entry = []byte{1, 2, 3, 4}
@@ -104,7 +111,7 @@ func TestEntryMarshal(t *testing.T) {
 		var e Entry = []byte{1, 2, 3, 4}
 		var buf bytes.Buffer
 
-		code, err := e.Marshal(&buf, common.EntryV1)
+		code, err := e.Marshal(&noopFlusher{Writer: &buf}, common.EntryV1)
 		require.NoError(t, err)
 		require.Equal(t, code, common.NoError)
 		require.EqualValues(t, []byte{0, 0, 0, 4, 1, 2, 3, 4, 0xb6, 0x3c, 0xfb, 0xcd}, buf.Bytes())
@@ -119,7 +126,7 @@ func TestEntry(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	code, err := e.Marshal(&buf, common.EntryV1)
+	code, err := e.Marshal(&noopFlusher{Writer: &buf}, common.EntryV1)
 	require.NoError(t, err)
 	require.Equal(t, common.NoError, code)
 

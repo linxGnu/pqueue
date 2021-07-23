@@ -4,21 +4,8 @@ import (
 	"errors"
 	"hash/crc32"
 	"io"
-	"sync"
 
 	"github.com/linxGnu/pqueue/common"
-)
-
-type sliceWrapper struct {
-	buffer []byte
-}
-
-var (
-	bufferPool = sync.Pool{
-		New: func() interface{} {
-			return &sliceWrapper{}
-		},
-	}
 )
 
 // Reader interface.
@@ -33,11 +20,17 @@ type Writer interface {
 	WriteEntry(Entry) (common.ErrCode, error)
 }
 
+// WriteFlusher interface.
+type WriteFlusher interface {
+	io.Writer
+	Flush() error
+}
+
 // Entry represents queue entry.
 type Entry []byte
 
 // Marshal writes entry to writer.
-func (e Entry) Marshal(w io.Writer, format common.EntryFormat) (code common.ErrCode, err error) {
+func (e Entry) Marshal(w WriteFlusher, format common.EntryFormat) (code common.ErrCode, err error) {
 	switch format {
 	case common.EntryV1:
 		return e.marshalV1(w)
@@ -48,26 +41,18 @@ func (e Entry) Marshal(w io.Writer, format common.EntryFormat) (code common.ErrC
 }
 
 // [Length - uint32][Payload - bytes][Checksum - uint32]
-func (e Entry) marshalV1(w io.Writer) (code common.ErrCode, err error) {
-	expectBufferSize := len(e) + 8
+func (e Entry) marshalV1(w WriteFlusher) (code common.ErrCode, err error) {
+	var buf [4]byte
 
-	// get buffer from pool
-	buf := bufferPool.Get().(*sliceWrapper)
-	if cap(buf.buffer) >= expectBufferSize {
-		buf.buffer = buf.buffer[:expectBufferSize]
-	} else {
-		buf.buffer = make([]byte, expectBufferSize)
+	common.Endianese.PutUint32(buf[:], uint32(len(e)))
+	if _, err = w.Write(buf[:]); err == nil {
+		if _, err = w.Write(e); err == nil {
+			common.Endianese.PutUint32(buf[:], crc32.ChecksumIEEE(e))
+			if _, err = w.Write(buf[:]); err == nil {
+				err = w.Flush()
+			}
+		}
 	}
-
-	// write to buffer
-	common.Endianese.PutUint32(buf.buffer, uint32(len(e)))
-	copy(buf.buffer[4:], e)
-	common.Endianese.PutUint32(buf.buffer[expectBufferSize-4:], crc32.ChecksumIEEE(e))
-
-	_, err = w.Write(buf.buffer)
-
-	// put back to pool, no matter what
-	bufferPool.Put(buf)
 
 	if err != nil {
 		code = common.EntryWriteErr

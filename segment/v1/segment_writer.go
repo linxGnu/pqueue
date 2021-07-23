@@ -1,6 +1,7 @@
 package segv1
 
 import (
+	"bufio"
 	"io"
 
 	"github.com/linxGnu/pqueue/common"
@@ -9,25 +10,31 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
+const (
+	writeBufferSize = 16 << 10
+)
+
 var (
 	segmentEnding = []byte{0, 0, 0, 0}
 )
 
 type segmentWriter struct {
-	w           io.WriteCloser
+	w           *bufio.Writer
+	underlying  io.WriteCloser
 	entryFormat common.EntryFormat
 }
 
 func newSegmentWriter(w io.WriteCloser, entryFormat common.EntryFormat) *segmentWriter {
 	return &segmentWriter{
-		w:           w,
+		w:           bufio.NewWriterSize(w, writeBufferSize),
+		underlying:  w,
 		entryFormat: entryFormat,
 	}
 }
 
 func (s *segmentWriter) Close() (err error) {
 	_, err = s.w.Write(segmentEnding)
-	err = multierror.Append(err, s.w.Close()).ErrorOrNil()
+	err = multierror.Append(err, s.w.Flush(), s.underlying.Close()).ErrorOrNil()
 	return
 }
 

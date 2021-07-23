@@ -14,6 +14,7 @@ import (
 
 	"github.com/linxGnu/pqueue/common"
 	"github.com/linxGnu/pqueue/entry"
+
 	"github.com/stretchr/testify/require"
 )
 
