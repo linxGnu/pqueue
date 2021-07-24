@@ -59,7 +59,7 @@ func (m *mockWriterErr) ReadHeader(r io.ReadCloser) (format common.SegmentFormat
 func TestNewSegment(t *testing.T) {
 	t.Run("Error", func(t *testing.T) {
 		var q queue
-		q.segHeader = &segmentHeader{}
+		q.segHeadWriter = &segmentHeader{}
 
 		q.settings = QueueSettings{
 			DataDir: "/abc",
@@ -86,14 +86,14 @@ func TestNewSegment(t *testing.T) {
 			SegmentFormat: common.SegmentV1,
 			EntryFormat:   common.EntryV1,
 		}
-		q.segHeader = &mockWriterErr{onSegmentHeader: true}
+		q.segHeadWriter = &mockWriterErr{onSegmentHeader: true}
 		_, err = q.newSegment()
 		require.Error(t, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {
 		var q queue
-		q.segHeader = &segmentHeader{}
+		q.segHeadWriter = &segmentHeader{}
 
 		q.settings = QueueSettings{
 			DataDir:       tmpDir,
@@ -108,7 +108,7 @@ func TestNewSegment(t *testing.T) {
 }
 
 func TestQueueRace(t *testing.T) {
-	size := 20000
+	size := 40000
 
 	dataDir := filepath.Join(tmpDir, "pqueue_race_test")
 	_ = os.RemoveAll(dataDir)
@@ -193,7 +193,7 @@ func TestQueueRace(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			buf := make([]byte, 16<<10)
+			buf := make([]byte, 4<<10)
 			for data := range ch {
 				time.Sleep(time.Millisecond)
 
@@ -279,12 +279,13 @@ func TestQueueExample(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(dataDir)
 
-	q, err := New(dataDir, 0)
+	q, err := New(dataDir, 3)
 	require.NoError(t, err)
 
 	require.NoError(t, q.Enqueue([]byte{1, 2, 3}))
 	require.NoError(t, q.Enqueue([]byte{4, 5, 6}))
 	require.NoError(t, q.Enqueue([]byte{7, 8, 9, 10}))
+	require.NoError(t, q.Enqueue([]byte{11}))
 
 	// peek then dequeue
 	var peek entry.Entry
@@ -299,9 +300,14 @@ func TestQueueExample(t *testing.T) {
 	require.EqualValues(t, []byte{4, 5, 6}, peek)
 	require.True(t, q.Peek(&peek))
 	require.EqualValues(t, []byte{7, 8, 9, 10}, peek)
+	require.Equal(t, 2, q.(*queue).segments.Len())
 
 	// dequeue then peek again
 	require.True(t, q.Dequeue(&peek))
 	require.EqualValues(t, []byte{7, 8, 9, 10}, peek)
-	require.False(t, q.Peek(&peek))
+	require.Equal(t, 2, q.(*queue).segments.Len()) // not remove yet
+
+	require.True(t, q.Peek(&peek))
+	require.EqualValues(t, []byte{11}, peek)
+	require.Equal(t, 1, q.(*queue).segments.Len()) // removed eof segment
 }

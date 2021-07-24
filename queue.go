@@ -26,14 +26,14 @@ type segment struct {
 }
 
 type queue struct {
-	segments  *list.List // item: *segment
-	segHeader segmentHeadWriter
-	settings  QueueSettings
-	rLock     sync.Mutex
-	wLock     sync.RWMutex
+	segments      *list.List // item: *segment
+	segHeadWriter segmentHeadWriter
+	settings      QueueSettings
 
-	// store peek
-	peek entry.Entry
+	rLock sync.Mutex
+	peek  entry.Entry
+
+	wLock sync.RWMutex
 }
 
 func (q *queue) Close() (err error) {
@@ -203,7 +203,7 @@ func (q *queue) newSegment() (*segment, error) {
 	path := f.Name()
 
 	// write header
-	if err = q.segHeader.WriteHeader(f, q.settings.SegmentFormat); err != nil {
+	if err = q.segHeadWriter.WriteHeader(f, q.settings.SegmentFormat); err != nil {
 		_ = os.Remove(path)
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func (q *queue) openSegmentForRead(path string) (format common.SegmentFormat, f 
 	f, err = os.Open(path)
 	if err == nil {
 		// read segment header
-		format, err = q.segHeader.ReadHeader(f)
+		format, err = q.segHeadWriter.ReadHeader(f)
 	}
 
 	if err != nil {
