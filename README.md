@@ -63,8 +63,8 @@ func main() {
 
 ### Comparing
 
-- github.com/joncrlsn/dque
-- github.com/grandecola/bigqueue - memory mapped (mmap) files
+- [github.com/joncrlsn/dque](https://github.com/joncrlsn/dque) - a fast embedded durable queue
+- [github.com/grandecola/bigqueue](https://github.com/grandecola/bigqueue) - embedded, fast and persistent queue written in pure Go using memory mapped (`mmap`) files
 
 ### Result
 
