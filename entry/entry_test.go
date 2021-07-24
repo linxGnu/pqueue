@@ -78,6 +78,28 @@ func TestEntryUnmarshal(t *testing.T) {
 		require.Equal(t, common.EntryNoMore, code)
 		require.NoError(t, err)
 	})
+
+	t.Run("Clone", func(t *testing.T) {
+		var e1 Entry = make([]byte, 16, 32)
+		var e2 Entry
+		e2.CloneFrom(e1)
+
+		require.True(t, &e1[0] != &e2[0])
+		require.EqualValues(t, e1, e2)
+
+		origin := &e2[0]
+		e1[0] = 12
+		e2.CloneFrom(e1)
+		require.True(t, &e1[0] != &e2[0])
+		require.EqualValues(t, e1, e2)
+		require.True(t, &e2[0] == origin)
+
+		e1 = e1[:31]
+		e2.CloneFrom(e1)
+		require.True(t, &e1[0] != &e2[0])
+		require.EqualValues(t, e1, e2)
+		require.True(t, &e2[0] != origin)
+	})
 }
 
 type errorWriter struct{}

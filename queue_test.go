@@ -168,6 +168,25 @@ func TestQueueRace(t *testing.T) {
 		}()
 	}
 
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			var e entry.Entry
+			for {
+				if atomic.LoadUint32(&total) >= uint32(size) {
+					return
+				}
+
+				if ok := q.Peek(&e); ok {
+					value := common.Endianese.Uint32(e)
+					require.True(t, value < uint32(size))
+				}
+			}
+		}()
+	}
+
 	ch := make(chan uint32, 1)
 	for i := 0; i < 8; i++ {
 		wg.Add(1)
@@ -251,4 +270,38 @@ func TestQueueWriteLoad(t *testing.T) {
 
 		_ = q.Close()
 	}
+}
+
+func TestQueueExample(t *testing.T) {
+	dataDir := filepath.Join(tmpDir, "pqueue_example")
+	_ = os.RemoveAll(dataDir)
+	err := os.MkdirAll(dataDir, 0777)
+	require.NoError(t, err)
+	defer os.RemoveAll(dataDir)
+
+	q, err := New(dataDir, 0)
+	require.NoError(t, err)
+
+	require.NoError(t, q.Enqueue([]byte{1, 2, 3}))
+	require.NoError(t, q.Enqueue([]byte{4, 5, 6}))
+	require.NoError(t, q.Enqueue([]byte{7, 8, 9, 10}))
+
+	// peek then dequeue
+	var peek entry.Entry
+	require.True(t, q.Peek(&peek))
+	require.EqualValues(t, []byte{1, 2, 3}, peek)
+	require.True(t, q.Dequeue(&peek))
+	require.EqualValues(t, []byte{1, 2, 3}, peek)
+	require.True(t, q.(*queue).peek == nil)
+
+	// dequeue then peek
+	require.True(t, q.Dequeue(&peek))
+	require.EqualValues(t, []byte{4, 5, 6}, peek)
+	require.True(t, q.Peek(&peek))
+	require.EqualValues(t, []byte{7, 8, 9, 10}, peek)
+
+	// dequeue then peek again
+	require.True(t, q.Dequeue(&peek))
+	require.EqualValues(t, []byte{7, 8, 9, 10}, peek)
+	require.False(t, q.Peek(&peek))
 }

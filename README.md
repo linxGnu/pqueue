@@ -39,11 +39,22 @@ func main() {
 	if err = q.Enqueue([]byte{1, 2, 3, 4}); err != nil {
 		log.Fatal(err)
 	}
+	if err = q.Enqueue([]byte{5, 6, 7, 8}); err != nil {
+		log.Fatal(err)
+	}
+
+	// peek
+	var v entry.Entry
+	if hasItem := q.Peek(&v); hasItem {
+		fmt.Println(v) // print: [1 2 3 4]
+	}
 
 	// dequeue
-	var v entry.Entry
 	if hasItem := q.Dequeue(&v); hasItem {
 		fmt.Println(v) // print: [1 2 3 4]
+	}
+	if hasItem := q.Dequeue(&v); hasItem {
+		fmt.Println(v) // print: [5 6 7 8]
 	}
 }
 ```

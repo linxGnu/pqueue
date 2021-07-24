@@ -25,6 +25,7 @@ type Queue interface {
 	io.Closer
 	Enqueue(entry.Entry) error
 	Dequeue(*entry.Entry) bool
+	Peek(*entry.Entry) bool
 }
 
 // New queue from directory.

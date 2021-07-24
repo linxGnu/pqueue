@@ -2,14 +2,13 @@ package pqueue
 
 import (
 	"container/list"
-	"io"
 	"io/ioutil"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/linxGnu/pqueue/common"
 	"github.com/linxGnu/pqueue/entry"
+	segmentPkg "github.com/linxGnu/pqueue/segment"
 	segv1 "github.com/linxGnu/pqueue/segment/v1"
 
 	"github.com/hashicorp/go-multierror"
@@ -19,29 +18,11 @@ const (
 	segPrefix = "seg_"
 )
 
-// Segment interface.
-type Segment interface {
-	io.Closer
-	Reading(io.ReadCloser) error
-	ReadEntry(*entry.Entry) (common.ErrCode, error)
-	WriteEntry(entry.Entry) (common.ErrCode, error)
-}
-
 type segment struct {
 	readable  bool
 	corrupted bool
-	seg       Segment
+	seg       segmentPkg.Segment
 	path      string
-}
-
-type file struct {
-	path    string
-	modTime time.Time
-}
-
-type segmentHeadWriter interface {
-	WriteHeader(io.WriteCloser, common.SegmentFormat) error
-	ReadHeader(io.ReadCloser) (common.SegmentFormat, error)
 }
 
 type queue struct {
@@ -50,6 +31,9 @@ type queue struct {
 	settings  QueueSettings
 	rLock     sync.Mutex
 	wLock     sync.RWMutex
+
+	// store peek
+	peek entry.Entry
 }
 
 func (q *queue) Close() (err error) {
@@ -66,9 +50,31 @@ func (q *queue) Close() (err error) {
 	}
 }
 
-func (q *queue) Dequeue(dst *entry.Entry) bool {
+func (q *queue) Peek(dst *entry.Entry) (hasEntry bool) {
 	q.rLock.Lock()
-	defer q.rLock.Unlock()
+
+	hasEntry = q.peek != nil || q.dequeue(&q.peek)
+	if hasEntry {
+		dst.CloneFrom(q.peek)
+	}
+
+	q.rLock.Unlock()
+	return
+}
+
+func (q *queue) Dequeue(dst *entry.Entry) (hasEntry bool) {
+	q.rLock.Lock()
+	hasEntry = q.dequeue(dst)
+	q.rLock.Unlock()
+	return
+}
+
+func (q *queue) dequeue(dst *entry.Entry) bool {
+	if q.peek != nil {
+		*dst = q.peek
+		q.peek = nil
+		return true
+	}
 
 	for {
 		front := q.front()
@@ -145,8 +151,12 @@ func (q *queue) Dequeue(dst *entry.Entry) bool {
 
 func (q *queue) Enqueue(e entry.Entry) error {
 	q.wLock.Lock()
-	defer q.wLock.Unlock()
+	err := q.enqueue(e)
+	q.wLock.Unlock()
+	return err
+}
 
+func (q *queue) enqueue(e entry.Entry) error {
 	for attempt := 0; attempt < 2; attempt++ {
 		back := q.segments.Back()
 		if back == nil {

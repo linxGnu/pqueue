@@ -101,12 +101,8 @@ func (e *Entry) unmarshalV1(r io.Reader) (code common.ErrCode, err error) {
 	}
 
 	// read payload
-	data := *e
-	if cap(data) >= int(size) {
-		data = data[:size]
-	} else {
-		data = make([]byte, size)
-	}
+	data := e.alloc(int(size))
+
 	_, err = io.ReadFull(r, data)
 	if err != nil {
 		code = common.EntryCorrupted
@@ -128,5 +124,23 @@ func (e *Entry) unmarshalV1(r io.Reader) (code common.ErrCode, err error) {
 		code = common.NoError
 	}
 
+	return
+}
+
+// CloneFrom other entry.
+func (e *Entry) CloneFrom(other Entry) {
+	data := e.alloc(len(other))
+	copy(data, other)
+	*e = data
+}
+
+// alloc slice from entry if capable. If not, create new one.
+func (e *Entry) alloc(expected int) (data []byte) {
+	data = *e
+	if cap(data) >= expected {
+		data = data[:expected]
+	} else {
+		data = make([]byte, expected)
+	}
 	return
 }

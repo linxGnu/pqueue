@@ -6,6 +6,11 @@ import (
 	"github.com/linxGnu/pqueue/common"
 )
 
+type segmentHeadWriter interface {
+	WriteHeader(io.WriteCloser, common.SegmentFormat) error
+	ReadHeader(io.ReadCloser) (common.SegmentFormat, error)
+}
+
 type segmentHeader struct{}
 
 func (s *segmentHeader) WriteHeader(w io.WriteCloser, format common.SegmentFormat) (err error) {

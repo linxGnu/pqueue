@@ -6,7 +6,13 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 )
+
+type file struct {
+	path    string
+	modTime time.Time
+}
 
 func load(settings QueueSettings, segHeader segmentHeadWriter) (*queue, error) {
 	if settings.MaxEntriesPerSegment <= 0 {
