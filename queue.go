@@ -127,25 +127,37 @@ func (q *queue) dequeue(dst *entry.Entry) bool {
 			continue
 		}
 
-		// now read
-		code, _ := head.seg.ReadEntry(dst)
-		switch code {
-		case common.NoError:
-			return true
-
-		case common.SegmentNoMoreReadWeak:
-			return false
-
-		default:
-			if code != common.SegmentNoMoreReadStrong {
-				head.corrupted = true
-				// TODO: write log here
-			}
-
-			if q.removeSegment(front) {
-				return false // no need to iterate more
-			}
+		if hasElement, shouldCont := q.readEntryFromHead(head, front, dst); shouldCont {
+			continue
+		} else {
+			return hasElement
 		}
+	}
+}
+
+func (q *queue) readEntryFromHead(head *segment, front *list.Element, dst *entry.Entry) (hasElement, shouldContinue bool) {
+	// now read
+	code, _ := head.seg.ReadEntry(dst)
+	switch code {
+	case common.NoError:
+		hasElement = true
+		return
+
+	case common.SegmentNoMoreReadWeak:
+		return
+
+	default:
+		if code != common.SegmentNoMoreReadStrong {
+			head.corrupted = true
+			// TODO: write log here
+		}
+
+		if q.removeSegment(front) {
+			return // no need to continue
+		}
+
+		shouldContinue = true
+		return
 	}
 }
 
