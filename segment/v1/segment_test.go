@@ -162,7 +162,7 @@ func TestNewSegmentReadWrite(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, common.SegmentNoMoreReadWeak, code)
 
-			_, _ = buffer.Write([]byte{0, 0, 0, 0})
+			_, _ = buffer.Write(segmentEnding)
 			code, err = s.readEntry(&e)
 			require.NoError(t, err)
 			require.Equal(t, common.SegmentNoMoreReadStrong, code)

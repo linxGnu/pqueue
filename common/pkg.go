@@ -17,13 +17,13 @@ type EntryFormat = uint32
 const (
 	// EntryV1 layout:
 	//
-	// [Length - uint32][Payload - bytes][Checksum - uint32]
+	// [Length - uint32][Checksum - uint32][Payload - bytes]
 	//
 	// Note:
 	// - `Payload` has size of `Length`
 	// - `Checksum` is crc32_IEEE(`Payload`)
 	// - `Entry` always starts with non-zero `Length` header
-	// - `Length` == 0 means ending, Payload and Checksum won't be written in this case.
+	// - `Length` == 0 means ending, Payload won't be written in this case.
 	EntryV1 EntryFormat = iota
 )
 

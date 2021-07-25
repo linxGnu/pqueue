@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	segmentEnding = []byte{0, 0, 0, 0}
+	segmentEnding = []byte{0, 0, 0, 0, 0, 0, 0, 0}
 )
 
 type segmentWriter struct {

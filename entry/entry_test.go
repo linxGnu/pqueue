@@ -31,14 +31,14 @@ func TestEntryUnmarshal(t *testing.T) {
 
 		// length zero
 		{
-			code, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 0}), common.EntryV1)
+			code, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 0, 0, 0, 0, 0}), common.EntryV1)
 			require.Equal(t, common.EntryZeroSize, code)
 			require.NoError(t, err)
 		}
 
 		// too big
 		{
-			code, err := e.Unmarshal(bytes.NewBuffer([]byte{255, 255, 0, 0}), common.EntryV1)
+			code, err := e.Unmarshal(bytes.NewBuffer([]byte{255, 255, 0, 0, 0, 0, 0, 0}), common.EntryV1)
 			require.Equal(t, common.EntryTooBig, code)
 			require.NoError(t, err)
 		}
@@ -68,7 +68,7 @@ func TestEntryUnmarshal(t *testing.T) {
 	t.Run("Happy", func(t *testing.T) {
 		var e Entry = make([]byte, 32)
 
-		buf := bytes.NewBuffer([]byte{0, 0, 0, 2, 19, 31, 173, 62, 94, 152})
+		buf := bytes.NewBuffer([]byte{0, 0, 0, 2, 173, 62, 94, 152, 19, 31})
 
 		code, err := e.Unmarshal(buf, common.EntryV1)
 		require.Equal(t, common.NoError, code)
@@ -136,7 +136,7 @@ func TestEntryMarshal(t *testing.T) {
 		code, err := e.Marshal(&noopFlusher{Writer: &buf}, common.EntryV1)
 		require.NoError(t, err)
 		require.Equal(t, code, common.NoError)
-		require.EqualValues(t, []byte{0, 0, 0, 4, 1, 2, 3, 4, 0xb6, 0x3c, 0xfb, 0xcd}, buf.Bytes())
+		require.EqualValues(t, []byte{0, 0, 0, 4, 0xb6, 0x3c, 0xfb, 0xcd, 1, 2, 3, 4}, buf.Bytes())
 	})
 }
 

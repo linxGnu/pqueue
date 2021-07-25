@@ -23,7 +23,7 @@ func TestSegmentReader(t *testing.T) {
 		}
 
 		{
-			w := newSegmentReader(io.NopCloser(bytes.NewBuffer([]byte{255, 255, 0, 0})), common.EntryV1)
+			w := newSegmentReader(io.NopCloser(bytes.NewBuffer([]byte{255, 255, 0, 0, 0, 0, 0, 0})), common.EntryV1)
 
 			var e entry.Entry
 			code, err := w.ReadEntry(&e)
@@ -32,7 +32,7 @@ func TestSegmentReader(t *testing.T) {
 		}
 
 		{
-			w := newSegmentReader(io.NopCloser(bytes.NewBuffer([]byte{0, 0, 0, 0})), common.EntryV1)
+			w := newSegmentReader(io.NopCloser(bytes.NewBuffer([]byte{0, 0, 0, 0, 0, 0, 0, 0})), common.EntryV1)
 
 			var e entry.Entry
 			code, err := w.ReadEntry(&e)
@@ -52,8 +52,8 @@ func TestSegmentReader(t *testing.T) {
 
 	t.Run("Happy", func(t *testing.T) {
 		underlying := io.NopCloser(bytes.NewBuffer([]byte{
-			0, 0, 0, 2, 19, 31, 173, 62, 94, 152,
-			0, 0, 0, 2, 19, 31, 173, 62, 94, 152,
+			0, 0, 0, 2, 173, 62, 94, 152, 19, 31,
+			0, 0, 0, 2, 173, 62, 94, 152, 19, 31,
 		}))
 		w := newSegmentReader(newBufferReader(underlying), common.EntryV1)
 

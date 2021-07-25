@@ -40,17 +40,13 @@ func (e Entry) Marshal(w WriteFlusher, format common.EntryFormat) (code common.E
 	}
 }
 
-// [Length - uint32][Payload - bytes][Checksum - uint32]
+// [Length - uint32][Checksum - uint32][Payload - bytes]
 func (e Entry) marshalV1(w WriteFlusher) (code common.ErrCode, err error) {
-	var buf [4]byte
-
-	common.Endianese.PutUint32(buf[:], uint32(len(e)))
+	var buf [8]byte
+	common.Endianese.PutUint64(buf[:], uint64(len(e))<<32|uint64(crc32.ChecksumIEEE(e)))
 	if _, err = w.Write(buf[:]); err == nil {
 		if _, err = w.Write(e); err == nil {
-			common.Endianese.PutUint32(buf[:], crc32.ChecksumIEEE(e))
-			if _, err = w.Write(buf[:]); err == nil {
-				err = w.Flush()
-			}
+			err = w.Flush()
 		}
 	}
 
@@ -74,9 +70,9 @@ func (e *Entry) Unmarshal(r io.Reader, format common.EntryFormat) (common.ErrCod
 	}
 }
 
-// [Length - uint32][Payload - bytes][Checksum - uint32]
+// [Length - uint32][Checksum - uint32][Payload - bytes]
 func (e *Entry) unmarshalV1(r io.Reader) (code common.ErrCode, err error) {
-	var buffer [4]byte
+	var buffer [8]byte
 
 	// read length
 	_, err = io.ReadFull(r, buffer[:])
@@ -90,7 +86,8 @@ func (e *Entry) unmarshalV1(r io.Reader) (code common.ErrCode, err error) {
 	}
 
 	// check length
-	size := common.Endianese.Uint32(buffer[:])
+	sizeAndSum := common.Endianese.Uint64(buffer[:])
+	size := sizeAndSum >> 32
 	if size == 0 {
 		code = common.EntryZeroSize
 		return
@@ -109,15 +106,8 @@ func (e *Entry) unmarshalV1(r io.Reader) (code common.ErrCode, err error) {
 		return
 	}
 
-	// read sum
-	_, err = io.ReadFull(r, buffer[:])
-	if err != nil {
-		code = common.EntryCorrupted
-		return
-	}
-
 	// checksum
-	if common.Endianese.Uint32(buffer[:]) != crc32.ChecksumIEEE(data) {
+	if crc32.ChecksumIEEE(data) != uint32(sizeAndSum) { // downcast to get lower 32-bit
 		code, err = common.EntryCorrupted, common.ErrEntryInvalidCheckSum
 	} else {
 		*e = data
