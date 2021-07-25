@@ -16,7 +16,6 @@ import (
 )
 
 var (
-	tooBig = make([]byte, common.MaxEntrySize+1)
 	tmpDir = os.TempDir()
 )
 
@@ -53,10 +52,6 @@ func TestNewSegmentReadWrite(t *testing.T) {
 		code, err := s.WriteEntry([]byte{})
 		require.NoError(t, err)
 		require.Equal(t, common.NoError, code)
-
-		code, err = s.WriteEntry(tooBig)
-		require.Equal(t, common.ErrEntryTooBig, err)
-		require.Equal(t, common.EntryTooBig, code)
 
 		code, err = s.WriteEntry([]byte("alpha"))
 		require.NoError(t, err)
@@ -100,10 +95,6 @@ func TestNewSegmentReadWrite(t *testing.T) {
 		code, err := s.WriteEntry([]byte{})
 		require.NoError(t, err)
 		require.Equal(t, common.NoError, code)
-
-		code, err = s.WriteEntry(tooBig)
-		require.Equal(t, common.ErrEntryTooBig, err)
-		require.Equal(t, common.EntryTooBig, code)
 
 		code, err = s.WriteEntry([]byte("alpha"))
 		require.Error(t, err)

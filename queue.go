@@ -2,7 +2,6 @@ package pqueue
 
 import (
 	"container/list"
-	"io/ioutil"
 	"os"
 	"sync"
 
@@ -196,7 +195,7 @@ func (q *queue) enqueue(e entry.Entry) error {
 }
 
 func (q *queue) newSegment() (*segment, error) {
-	f, err := ioutil.TempFile(q.settings.DataDir, segPrefix)
+	f, err := os.CreateTemp(q.settings.DataDir, segPrefix)
 	if err != nil {
 		return nil, err
 	}

@@ -79,3 +79,11 @@ func loadFileInfos(dir string, infoExtractor func(os.DirEntry) (os.FileInfo, err
 func fileInfoExtractor(f os.DirEntry) (os.FileInfo, error) {
 	return f.Info()
 }
+
+func fileExists(filename string) bool {
+	i, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !i.IsDir()
+}

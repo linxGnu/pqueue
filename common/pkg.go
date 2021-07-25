@@ -3,11 +3,12 @@ package common
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 )
 
 const (
 	// MaxEntrySize indicates max size for Entry.
-	MaxEntrySize = 5 << 20 // 5MB
+	MaxEntrySize = math.MaxInt32 >> 1
 )
 
 // EntryFormat layout.
@@ -27,8 +28,8 @@ const (
 )
 
 var (
-	// ErrEntryTooBig indicates entry size is bigger than 5MB.
-	ErrEntryTooBig = fmt.Errorf("entry size is bigger than limitation of 5MB")
+	// ErrEntryTooBig indicates entry size is bigger than 1GB.
+	ErrEntryTooBig = fmt.Errorf("entry size is bigger than limitation of 1GB")
 
 	// ErrEntryUnsupportedFormat indicates unsupported format for entry on disk.
 	ErrEntryUnsupportedFormat = fmt.Errorf("unsupported entry format")

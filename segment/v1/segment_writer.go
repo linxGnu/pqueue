@@ -10,10 +10,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-const (
-	writeBufferSize = 16 << 10
-)
-
 var (
 	segmentEnding = []byte{0, 0, 0, 0}
 )
@@ -26,7 +22,7 @@ type segmentWriter struct {
 
 func newSegmentWriter(w io.WriteCloser, entryFormat common.EntryFormat) *segmentWriter {
 	return &segmentWriter{
-		w:           bufio.NewWriterSize(w, writeBufferSize),
+		w:           bufio.NewWriter(w),
 		underlying:  w,
 		entryFormat: entryFormat,
 	}

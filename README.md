@@ -59,6 +59,9 @@ func main() {
 }
 ```
 
+## Limitation
+- Entry size must not be larger than 1GB
+
 ## Benchmark
 
 ### Comparing
