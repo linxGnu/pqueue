@@ -45,6 +45,10 @@ func newSegmentReader(r io.ReadSeekCloser, entryFormat common.EntryFormat) *segm
 	return &segmentReader{r: r, entryFormat: entryFormat}
 }
 
+func (s *segmentReader) Seek(offset int64, whence int) (int64, error) {
+	return s.r.Seek(offset, whence)
+}
+
 func (s *segmentReader) Close() error {
 	return s.r.Close()
 }

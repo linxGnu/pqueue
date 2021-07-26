@@ -45,8 +45,9 @@ func TestNewSegmentReadWrite(t *testing.T) {
 		require.NoError(t, err)
 
 		// reading
-		err = s.Reading(newMockReadSeeker(buffer))
+		n, err := s.Reading(newMockReadSeeker(buffer))
 		require.NoError(t, err)
+		require.Equal(t, 4, n)
 
 		code, err := s.WriteEntry([]byte{})
 		require.NoError(t, err)
@@ -57,7 +58,7 @@ func TestNewSegmentReadWrite(t *testing.T) {
 		require.Equal(t, common.NoError, code)
 
 		var e entry.Entry
-		code, n, err := s.ReadEntry(&e)
+		code, n, err = s.ReadEntry(&e)
 		require.NoError(t, err)
 		require.Equal(t, common.NoError, code)
 		require.Equal(t, "alpha", string(e))
@@ -202,7 +203,9 @@ func TestSegmentRace(t *testing.T) {
 	// create new segment
 	s, err := NewSegment(f, common.EntryV1, uint32(size))
 	require.NoError(t, err)
-	require.NoError(t, s.Reading(fr))
+	n, err := s.Reading(fr)
+	require.NoError(t, err)
+	require.Equal(t, 4, n)
 	defer s.Close()
 
 	// start reader

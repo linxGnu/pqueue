@@ -92,10 +92,10 @@ func (s *Segment) Close() (err error) {
 }
 
 // Reading from source.
-func (s *Segment) Reading(source io.ReadSeekCloser) (err error) {
+func (s *Segment) Reading(source io.ReadSeekCloser) (n int, err error) {
 	// should bypass entryFormat
 	var dummy [4]byte
-	_, err = io.ReadFull(source, dummy[:])
+	n, err = io.ReadFull(source, dummy[:])
 
 	// no problem?
 	if err == nil {
@@ -178,4 +178,9 @@ func (s *Segment) readEntry(e *entry.Entry) (common.ErrCode, int, error) {
 		_ = s.r.Close()
 		return common.SegmentCorrupted, n, err
 	}
+}
+
+func (s *Segment) SeekToRead(offset int64) error {
+	_, err := s.r.Seek(offset, 0)
+	return err
 }
