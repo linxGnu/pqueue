@@ -2,6 +2,7 @@ package pqueue
 
 import (
 	"container/list"
+	"io"
 	"os"
 	"sync"
 
@@ -100,6 +101,18 @@ func (q *queue) dequeue(dst *entry.Entry) bool {
 				var n int
 				if n, err = q.startReadingSegment(format, head, file); err == nil {
 					q.offsetTracker.offset = 4 + int64(n)
+
+					var (
+						offset     int64
+						offsetFile *os.File
+					)
+					offset, offsetFile, err = loadOffsetTracker(offsetFilePath(head.path))
+					if err == nil {
+						q.offsetTracker.f = offsetFile
+						if offset > 0 && head.seg.SeekToRead(offset) == nil {
+							q.offsetTracker.offset = offset
+						}
+					}
 				}
 			}
 
@@ -296,6 +309,38 @@ func (q *queue) newSegment() (*segment, error) {
 		_ = os.Remove(path)
 		return nil, common.ErrSegmentUnsupportedFormat
 	}
+}
+
+func loadOffsetTracker(path string) (offset int64, f *os.File, err error) {
+	for attempt := 0; attempt < 2; attempt++ {
+		f, err = os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			return
+		}
+
+		var info os.FileInfo
+		info, err = f.Stat()
+		if err == nil {
+			if info.Size() < 8 {
+				return
+			}
+
+			// seek and read stored-offset
+			if _, err = f.Seek(-8, 2); err == nil {
+				var buf [8]byte
+				if _, err = io.ReadFull(f, buf[:]); err == nil {
+					offset = int64(common.Endianese.Uint64(buf[:]))
+					_, err = f.Seek(0, 2) // to the end
+				}
+			}
+		}
+
+		if err != nil {
+			_ = f.Close()
+			_ = os.Remove(path)
+		}
+	}
+	return
 }
 
 func offsetFilePath(segmentFilePath string) string {
