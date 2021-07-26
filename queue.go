@@ -2,6 +2,7 @@ package pqueue
 
 import (
 	"container/list"
+	"io"
 	"os"
 	"sync"
 
@@ -14,14 +15,14 @@ import (
 )
 
 const (
-	segPrefix = "seg_"
+	segPrefix           = "seg_"
+	segOffsetFileSuffix = ".offset"
 )
 
 type segment struct {
-	readable  bool
-	corrupted bool
-	seg       segmentPkg.Segment
-	path      string
+	readable bool
+	seg      segmentPkg.Segment
+	path     string
 }
 
 type queue struct {
@@ -33,13 +34,18 @@ type queue struct {
 	peek  entry.Entry
 
 	wLock sync.RWMutex
+
+	offsetTracker struct {
+		f      *os.File
+		offset int64
+	}
 }
 
 func (q *queue) Close() (err error) {
 	for {
 		node := q.segments.Front()
 		if node == nil {
-			return
+			break
 		}
 
 		seg := q.segments.Remove(node).(*segment)
@@ -47,6 +53,8 @@ func (q *queue) Close() (err error) {
 			err = multierror.Append(err, seg.seg.Close()).ErrorOrNil()
 		}
 	}
+	err = multierror.Append(err, q.closeOffsetTracker()).ErrorOrNil()
+	return
 }
 
 func (q *queue) Peek(dst *entry.Entry) (hasEntry bool) {
@@ -63,7 +71,9 @@ func (q *queue) Peek(dst *entry.Entry) (hasEntry bool) {
 
 func (q *queue) Dequeue(dst *entry.Entry) (hasEntry bool) {
 	q.rLock.Lock()
-	hasEntry = q.dequeue(dst)
+	if hasEntry = q.dequeue(dst); hasEntry {
+		q.commitOffset()
+	}
 	q.rLock.Unlock()
 	return
 }
@@ -83,29 +93,33 @@ func (q *queue) dequeue(dst *entry.Entry) bool {
 
 		head := front.Value.(*segment)
 		if !head.readable { // should open the file?
+			q.offsetTracker.f = nil
+			q.offsetTracker.offset = 0
+
 			format, file, err := q.openSegmentForRead(head.path)
-			if err != nil {
-				if q.removeSegment(front) {
-					return false
+			if err == nil {
+				var n int
+				if n, err = q.startReadingSegment(format, head, file); err == nil {
+					q.offsetTracker.offset = 4 + int64(n)
+
+					var (
+						offset     int64
+						offsetFile *os.File
+					)
+					offset, offsetFile, err = loadOffsetTracker(offsetFilePath(head.path))
+					if err == nil {
+						q.offsetTracker.f = offsetFile
+						if offset > 0 && head.seg.SeekToRead(offset) == nil {
+							q.offsetTracker.offset = offset
+						}
+					}
 				}
-				continue
 			}
 
-			// everything is fine
-			if head.seg == nil {
-				switch format {
-				case common.SegmentV1:
-					head.seg, err = segv1.NewReadOnlySegment(file)
-
-				default:
-					err = common.ErrSegmentUnsupportedFormat
-				}
-			} else {
-				err = head.seg.Reading(file)
-			}
-
 			if err != nil {
-				_ = file.Close()
+				if file != nil {
+					_ = file.Close()
+				}
 				if q.removeSegment(front) {
 					return false
 				}
@@ -116,27 +130,54 @@ func (q *queue) dequeue(dst *entry.Entry) bool {
 			head.readable = true
 		}
 
-		// already corrupt -> try to remove
-		// if it's tail -> nothing to do
-		// if not -> maybe next segment is ok to read
-		if head.corrupted {
-			if q.removeSegment(front) {
-				return false
-			}
-			continue
-		}
-
-		if hasElement, shouldCont := q.readEntryFromHead(head, front, dst); shouldCont {
+		if n, hasElement, shouldCont := q.readEntryFromHead(head, front, dst); shouldCont {
 			continue
 		} else {
+			q.offsetTracker.offset += int64(n)
 			return hasElement
 		}
 	}
 }
 
-func (q *queue) readEntryFromHead(head *segment, front *list.Element, dst *entry.Entry) (hasElement, shouldContinue bool) {
+func (q *queue) front() (fr *list.Element) {
+	q.wLock.RLock()
+	fr = q.segments.Front()
+	q.wLock.RUnlock()
+	return
+}
+
+func (q *queue) openSegmentForRead(path string) (format common.SegmentFormat, f *os.File, err error) {
+	f, err = os.Open(path)
+	if err == nil {
+		// read segment header
+		format, err = q.segHeadWriter.ReadHeader(f)
+	}
+
+	if err != nil && f != nil {
+		_ = f.Close()
+	}
+
+	return
+}
+
+func (q *queue) startReadingSegment(format common.SegmentFormat, s *segment, file *os.File) (n int, err error) {
+	switch format {
+	case common.SegmentV1:
+		if s.seg == nil {
+			s.seg, n, err = segv1.NewReadOnlySegment(file)
+		} else {
+			n, err = s.seg.Reading(file)
+		}
+
+	default:
+		err = common.ErrSegmentUnsupportedFormat
+	}
+	return
+}
+
+func (q *queue) readEntryFromHead(head *segment, front *list.Element, dst *entry.Entry) (n int, hasElement, shouldContinue bool) {
 	// now read
-	code, _ := head.seg.ReadEntry(dst)
+	code, n, _ := head.seg.ReadEntry(dst)
 	switch code {
 	case common.NoError:
 		hasElement = true
@@ -146,10 +187,9 @@ func (q *queue) readEntryFromHead(head *segment, front *list.Element, dst *entry
 		return
 
 	default:
-		if code != common.SegmentNoMoreReadStrong {
-			head.corrupted = true
-			// TODO: write log here
-		}
+		// TODO: write log here
+		// if code != common.SegmentNoMoreReadStrong {
+		// }
 
 		if q.removeSegment(front) {
 			return // no need to continue
@@ -158,6 +198,48 @@ func (q *queue) readEntryFromHead(head *segment, front *list.Element, dst *entry
 		shouldContinue = true
 		return
 	}
+}
+
+func (q *queue) removeSegment(seg *list.Element) bool {
+	q.wLock.RLock()
+
+	// do not remove back/tail of segment list
+	if seg == q.segments.Back() {
+		q.wLock.RUnlock()
+		return true
+	}
+
+	// remove from list
+	val := q.segments.Remove(seg)
+
+	q.wLock.RUnlock()
+
+	// remove underlying file
+	segmentFilePath := val.(*segment).path
+	_ = os.Remove(segmentFilePath)
+	q.closeAndRemoveOffsetTracker(offsetFilePath(segmentFilePath))
+
+	return false
+}
+
+func (q *queue) commitOffset() {
+	if q.offsetTracker.f != nil {
+		var buf [8]byte
+		common.Endianese.PutUint64(buf[:], uint64(q.offsetTracker.offset))
+		_, _ = q.offsetTracker.f.Write(buf[:])
+	}
+}
+
+func (q *queue) closeOffsetTracker() (err error) {
+	if q.offsetTracker.f != nil {
+		err = q.offsetTracker.f.Close()
+	}
+	return
+}
+
+func (q *queue) closeAndRemoveOffsetTracker(path string) {
+	_ = q.closeOffsetTracker()
+	_ = os.Remove(path)
 }
 
 func (q *queue) Enqueue(e entry.Entry) error {
@@ -229,43 +311,38 @@ func (q *queue) newSegment() (*segment, error) {
 	}
 }
 
-func (q *queue) front() (fr *list.Element) {
-	q.wLock.RLock()
-	fr = q.segments.Front()
-	q.wLock.RUnlock()
+func loadOffsetTracker(path string) (offset int64, f *os.File, err error) {
+	for attempt := 0; attempt < 2; attempt++ {
+		f, err = os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			return
+		}
+
+		var info os.FileInfo
+		info, err = f.Stat()
+		if err == nil {
+			if info.Size() < 8 {
+				return
+			}
+
+			// seek and read stored-offset
+			if _, err = f.Seek(-8, 2); err == nil {
+				var buf [8]byte
+				if _, err = io.ReadFull(f, buf[:]); err == nil {
+					offset = int64(common.Endianese.Uint64(buf[:]))
+					_, err = f.Seek(0, 2) // to the end
+				}
+			}
+		}
+
+		if err != nil {
+			_ = f.Close()
+			_ = os.Remove(path)
+		}
+	}
 	return
 }
 
-func (q *queue) removeSegment(seg *list.Element) bool {
-	q.wLock.RLock()
-
-	// do not remove back/tail of segment list
-	if seg == q.segments.Back() {
-		q.wLock.RUnlock()
-		return true
-	}
-
-	// remove from list
-	val := q.segments.Remove(seg)
-
-	q.wLock.RUnlock()
-
-	// remove underlying file
-	_ = os.Remove(val.(*segment).path)
-
-	return false
-}
-
-func (q *queue) openSegmentForRead(path string) (format common.SegmentFormat, f *os.File, err error) {
-	f, err = os.Open(path)
-	if err == nil {
-		// read segment header
-		format, err = q.segHeadWriter.ReadHeader(f)
-	}
-
-	if err != nil {
-		_ = f.Close()
-	}
-
-	return
+func offsetFilePath(segmentFilePath string) string {
+	return segmentFilePath + segOffsetFileSuffix
 }

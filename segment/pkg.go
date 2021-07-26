@@ -10,7 +10,8 @@ import (
 // Segment interface.
 type Segment interface {
 	io.Closer
-	Reading(io.ReadCloser) error
-	ReadEntry(*entry.Entry) (common.ErrCode, error)
+	Reading(io.ReadSeekCloser) (int, error)
+	ReadEntry(*entry.Entry) (common.ErrCode, int, error)
 	WriteEntry(entry.Entry) (common.ErrCode, error)
+	SeekToRead(int64) error
 }

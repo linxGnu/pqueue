@@ -262,7 +262,33 @@ func TestQueueWriteLoad(t *testing.T) {
 		require.NoError(t, err)
 
 		var e entry.Entry
-		for expect := 0; expect < size; expect++ {
+		for expect := 0; expect < size-100; expect++ {
+			require.True(t, q.Dequeue(&e))
+			require.EqualValues(t, expect, common.Endianese.Uint32(e))
+		}
+
+		_ = q.Close()
+	}
+
+	{
+		q, err := New(dataDir, 0)
+		require.NoError(t, err)
+
+		var e entry.Entry
+		for expect := size - 100; expect < size-20; expect++ {
+			require.True(t, q.Dequeue(&e))
+			require.EqualValues(t, expect, common.Endianese.Uint32(e))
+		}
+
+		_ = q.Close()
+	}
+
+	{
+		q, err := New(dataDir, 0)
+		require.NoError(t, err)
+
+		var e entry.Entry
+		for expect := size - 20; expect < size; expect++ {
 			require.True(t, q.Dequeue(&e))
 			require.EqualValues(t, expect, common.Endianese.Uint32(e))
 		}
@@ -310,4 +336,32 @@ func TestQueueExample(t *testing.T) {
 	require.True(t, q.Peek(&peek))
 	require.EqualValues(t, []byte{11}, peek)
 	require.Equal(t, 1, q.(*queue).segments.Len()) // removed eof segment
+}
+
+func TestLoadOffsetFile(t *testing.T) {
+	_, _, err := loadOffsetTracker("/")
+	require.Error(t, err)
+}
+
+func TestQueueCorruptedWritingFile(t *testing.T) {
+	dataDir := filepath.Join(tmpDir, "pqueue_hijack")
+	_ = os.RemoveAll(dataDir)
+	err := os.MkdirAll(dataDir, 0777)
+	require.NoError(t, err)
+	defer os.RemoveAll(dataDir)
+
+	q, err := New(dataDir, 3)
+	require.NoError(t, err)
+
+	require.NoError(t, q.Enqueue([]byte{1, 2, 3}))
+
+	front := q.(*queue).segments.Front().Value.(*segment)
+	f, err := os.OpenFile(front.path, os.O_RDWR, 0644)
+	require.NoError(t, err)
+	_, err = f.Write([]byte{1, 2, 3, 4, 1, 1, 1, 1})
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	var e entry.Entry
+	require.False(t, q.Dequeue(&e))
 }
