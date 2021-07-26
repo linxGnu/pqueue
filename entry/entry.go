@@ -11,7 +11,7 @@ import (
 // Reader interface.
 type Reader interface {
 	io.Closer
-	ReadEntry(*Entry) (common.ErrCode, error)
+	ReadEntry(*Entry) (common.ErrCode, int, error)
 }
 
 // Writer interface.

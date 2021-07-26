@@ -28,11 +28,12 @@ type Segment struct {
 }
 
 // NewReadOnlySegment creates new Segment for readonly.
-func NewReadOnlySegment(source io.ReadCloser) (*Segment, error) {
+func NewReadOnlySegment(source io.ReadSeekCloser) (*Segment, int, error) {
 	// get entry format
 	var buf [4]byte
-	if _, err := io.ReadFull(source, buf[:]); err != nil {
-		return nil, err
+	n, err := io.ReadFull(source, buf[:])
+	if err != nil {
+		return nil, n, err
 	}
 
 	// check entry format
@@ -41,15 +42,15 @@ func NewReadOnlySegment(source io.ReadCloser) (*Segment, error) {
 	case common.EntryV1:
 
 	default:
-		return nil, common.ErrEntryUnsupportedFormat
+		return nil, n, common.ErrEntryUnsupportedFormat
 	}
 
 	// ok now
 	return &Segment{
 		readOnly:    true,
 		entryFormat: entryFormat,
-		r:           newSegmentReader(source, entryFormat),
-	}, nil
+		r:           newSegmentReader(newBufferReader(source), entryFormat),
+	}, n, nil
 }
 
 // NewSegment from path.
@@ -91,14 +92,14 @@ func (s *Segment) Close() (err error) {
 }
 
 // Reading from source.
-func (s *Segment) Reading(source io.ReadCloser) (err error) {
+func (s *Segment) Reading(source io.ReadSeekCloser) (err error) {
 	// should bypass entryFormat
 	var dummy [4]byte
 	_, err = io.ReadFull(source, dummy[:])
 
 	// no problem?
 	if err == nil {
-		s.r = newSegmentReader(source, s.entryFormat)
+		s.r = newSegmentReader(newBufferReader(source), s.entryFormat)
 	}
 
 	return
@@ -135,7 +136,7 @@ func (s *Segment) writeEntry(e entry.Entry) (common.ErrCode, error) {
 }
 
 // ReadEntry from segment.
-func (s *Segment) ReadEntry(e *entry.Entry) (common.ErrCode, error) {
+func (s *Segment) ReadEntry(e *entry.Entry) (common.ErrCode, int, error) {
 	s.rLock.Lock()
 	defer s.rLock.Unlock()
 
@@ -143,10 +144,10 @@ func (s *Segment) ReadEntry(e *entry.Entry) (common.ErrCode, error) {
 		// readable?
 		if s.offset == s.maxEntries {
 			_ = s.r.Close()
-			return common.SegmentNoMoreReadStrong, nil
+			return common.SegmentNoMoreReadStrong, 0, nil
 		}
 		if s.offset == atomic.LoadUint32(&s.numEntries) {
-			return common.SegmentNoMoreReadWeak, nil
+			return common.SegmentNoMoreReadWeak, 0, nil
 		}
 
 		s.offset++
@@ -155,26 +156,26 @@ func (s *Segment) ReadEntry(e *entry.Entry) (common.ErrCode, error) {
 	return s.readEntry(e)
 }
 
-func (s *Segment) readEntry(e *entry.Entry) (common.ErrCode, error) {
-	code, err := s.r.ReadEntry(e)
+func (s *Segment) readEntry(e *entry.Entry) (common.ErrCode, int, error) {
+	code, n, err := s.r.ReadEntry(e)
 
 	switch code {
 	case common.NoError:
-		return common.NoError, nil
+		return common.NoError, n, nil
 
 	case common.SegmentNoMoreReadStrong:
 		_ = s.r.Close()
-		return common.SegmentNoMoreReadStrong, nil
+		return common.SegmentNoMoreReadStrong, 0, nil
 
 	case common.SegmentNoMoreReadWeak:
 		if s.readOnly {
 			_ = s.r.Close()
-			return common.SegmentNoMoreReadStrong, nil
+			return common.SegmentNoMoreReadStrong, 0, nil
 		}
-		return common.SegmentNoMoreReadWeak, nil
+		return common.SegmentNoMoreReadWeak, 0, nil
 
 	default: // corrupted
 		_ = s.r.Close()
-		return common.SegmentCorrupted, err
+		return common.SegmentCorrupted, n, err
 	}
 }
