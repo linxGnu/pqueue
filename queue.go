@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	segPrefix = "seg_"
+	segPrefix           = "seg_"
+	segOffsetFileSuffix = ".offset"
 )
 
 type segment struct {
@@ -69,7 +70,9 @@ func (q *queue) Peek(dst *entry.Entry) (hasEntry bool) {
 
 func (q *queue) Dequeue(dst *entry.Entry) (hasEntry bool) {
 	q.rLock.Lock()
-	hasEntry = q.dequeue(dst)
+	if hasEntry = q.dequeue(dst); hasEntry {
+		q.commitOffset()
+	}
 	q.rLock.Unlock()
 	return
 }
@@ -199,9 +202,19 @@ func (q *queue) removeSegment(seg *list.Element) bool {
 	q.wLock.RUnlock()
 
 	// remove underlying file
-	_ = os.Remove(val.(*segment).path)
+	segmentFilePath := val.(*segment).path
+	_ = os.Remove(segmentFilePath)
+	q.closeAndRemoveOffsetTracker(offsetFilePath(segmentFilePath))
 
 	return false
+}
+
+func (q *queue) commitOffset() {
+	if q.offsetTracker.f != nil {
+		var buf [8]byte
+		common.Endianese.PutUint64(buf[:], uint64(q.offsetTracker.offset))
+		_, _ = q.offsetTracker.f.Write(buf[:])
+	}
 }
 
 func (q *queue) closeOffsetTracker() (err error) {
@@ -283,4 +296,8 @@ func (q *queue) newSegment() (*segment, error) {
 		_ = os.Remove(path)
 		return nil, common.ErrSegmentUnsupportedFormat
 	}
+}
+
+func offsetFilePath(segmentFilePath string) string {
+	return segmentFilePath + segOffsetFileSuffix
 }

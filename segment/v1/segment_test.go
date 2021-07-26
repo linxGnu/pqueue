@@ -87,6 +87,8 @@ func TestNewSegmentReadWrite(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, common.SegmentNoMoreReadStrong, code)
 		require.Equal(t, 0, n)
+
+		require.NoError(t, s.SeekToRead(0))
 	})
 
 	t.Run("WriteError", func(t *testing.T) {
