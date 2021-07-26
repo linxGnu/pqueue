@@ -180,6 +180,7 @@ func (s *Segment) readEntry(e *entry.Entry) (common.ErrCode, int, error) {
 	}
 }
 
+// SeekToRead - offset from beginning of Segment.
 func (s *Segment) SeekToRead(offset int64) error {
 	_, err := s.r.Seek(offset, 0)
 	return err
