@@ -60,22 +60,22 @@ func (e Entry) marshalV1(w WriteFlusher) (code common.ErrCode, err error) {
 }
 
 // Unmarshal from reader.
-func (e *Entry) Unmarshal(r io.Reader, format common.EntryFormat) (common.ErrCode, error) {
+func (e *Entry) Unmarshal(r io.Reader, format common.EntryFormat) (common.ErrCode, int, error) {
 	switch format {
 	case common.EntryV1:
 		return e.unmarshalV1(r)
 
 	default:
-		return common.EntryUnsupportedFormat, common.ErrEntryUnsupportedFormat
+		return common.EntryUnsupportedFormat, 0, common.ErrEntryUnsupportedFormat
 	}
 }
 
 // [Length - uint32][Checksum - uint32][Payload - bytes]
-func (e *Entry) unmarshalV1(r io.Reader) (code common.ErrCode, err error) {
+func (e *Entry) unmarshalV1(r io.Reader) (code common.ErrCode, n int, err error) {
 	var buffer [8]byte
 
 	// read length
-	_, err = io.ReadFull(r, buffer[:])
+	n, err = io.ReadFull(r, buffer[:])
 	if errors.Is(err, io.EOF) {
 		code, err = common.EntryNoMore, nil
 		return
@@ -100,7 +100,9 @@ func (e *Entry) unmarshalV1(r io.Reader) (code common.ErrCode, err error) {
 	// read payload
 	data := e.alloc(int(size))
 
-	_, err = io.ReadFull(r, data)
+	n_, err := io.ReadFull(r, data)
+	n += n_
+
 	if err != nil {
 		code = common.EntryCorrupted
 		return

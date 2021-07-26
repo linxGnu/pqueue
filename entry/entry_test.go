@@ -14,9 +14,10 @@ import (
 func TestEntryUnmarshal(t *testing.T) {
 	t.Run("UnsupportedFormat", func(t *testing.T) {
 		var e Entry
-		code, err := e.Unmarshal(nil, 123)
+		code, n, err := e.Unmarshal(nil, 123)
 		require.Equal(t, common.EntryUnsupportedFormat, code)
 		require.Equal(t, common.ErrEntryUnsupportedFormat, err)
+		require.Equal(t, 0, n)
 	})
 
 	t.Run("Corrupted", func(t *testing.T) {
@@ -24,44 +25,58 @@ func TestEntryUnmarshal(t *testing.T) {
 
 		// length missing
 		{
-			code, err := e.Unmarshal(bytes.NewBuffer([]byte{1, 2}), common.EntryV1)
+			code, n, err := e.Unmarshal(bytes.NewBuffer([]byte{1, 2}), common.EntryV1)
 			require.Equal(t, common.EntryCorrupted, code)
 			require.Error(t, err)
+			require.Equal(t, 2, n)
 		}
 
 		// length zero
 		{
-			code, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 0, 0, 0, 0, 0}), common.EntryV1)
+			code, n, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 0, 0, 0, 0, 0}), common.EntryV1)
 			require.Equal(t, common.EntryZeroSize, code)
 			require.NoError(t, err)
+			require.Equal(t, 8, n)
 		}
 
 		// too big
 		{
-			code, err := e.Unmarshal(bytes.NewBuffer([]byte{255, 255, 0, 0, 0, 0, 0, 0}), common.EntryV1)
+			code, n, err := e.Unmarshal(bytes.NewBuffer([]byte{255, 255, 0, 0, 0, 0, 0, 0}), common.EntryV1)
 			require.Equal(t, common.EntryTooBig, code)
 			require.NoError(t, err)
+			require.Equal(t, 8, n)
 		}
 
 		// missing payload
 		{
-			code, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 2, 1}), common.EntryV1)
+			code, n, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 2, 1}), common.EntryV1)
 			require.Equal(t, common.EntryCorrupted, code)
 			require.Error(t, err)
+			require.Equal(t, 5, n)
 		}
 
 		// missing sum
 		{
-			code, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 2, 1, 1}), common.EntryV1)
+			code, n, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 2, 1, 1}), common.EntryV1)
 			require.Equal(t, common.EntryCorrupted, code)
 			require.Error(t, err)
+			require.Equal(t, 6, n)
 		}
 
 		// invalid sum
 		{
-			code, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 2, 1, 1, 1, 2, 3, 4}), common.EntryV1)
+			code, n, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 2, 1, 1, 1, 2, 3, 4}), common.EntryV1)
 			require.Equal(t, common.EntryCorrupted, code)
 			require.Equal(t, common.ErrEntryInvalidCheckSum, err)
+			require.Equal(t, 10, n)
+		}
+
+		// corrupt
+		{
+			code, n, err := e.Unmarshal(bytes.NewBuffer([]byte{0, 0, 0, 2, 1, 1, 1, 2, 3}), common.EntryV1)
+			require.Equal(t, common.EntryCorrupted, code)
+			require.Error(t, err)
+			require.Equal(t, 9, n)
 		}
 	})
 
@@ -70,13 +85,15 @@ func TestEntryUnmarshal(t *testing.T) {
 
 		buf := bytes.NewBuffer([]byte{0, 0, 0, 2, 173, 62, 94, 152, 19, 31})
 
-		code, err := e.Unmarshal(buf, common.EntryV1)
+		code, n, err := e.Unmarshal(buf, common.EntryV1)
 		require.Equal(t, common.NoError, code)
 		require.NoError(t, err)
+		require.Equal(t, 10, n)
 
-		code, err = e.Unmarshal(buf, common.EntryV1)
+		code, n, err = e.Unmarshal(buf, common.EntryV1)
 		require.Equal(t, common.EntryNoMore, code)
 		require.NoError(t, err)
+		require.Equal(t, 0, n)
 	})
 
 	t.Run("Clone", func(t *testing.T) {
@@ -153,9 +170,10 @@ func TestEntry(t *testing.T) {
 	require.Equal(t, common.NoError, code)
 
 	var tmp Entry
-	code, err = tmp.Unmarshal(&buf, common.EntryV1)
+	code, n, err := tmp.Unmarshal(&buf, common.EntryV1)
 	require.NoError(t, err)
 	require.Equal(t, common.NoError, code)
+	require.Equal(t, 131, n)
 
 	require.EqualValues(t, e, tmp)
 }
