@@ -214,10 +214,18 @@ func (q *queue) removeSegment(seg *list.Element) bool {
 
 	q.wLock.RUnlock()
 
+	segment_ := val.(*segment)
+
+	// close segment
+	if segment_.seg != nil {
+		_ = segment_.seg.Close()
+	}
+
 	// remove underlying file
-	segmentFilePath := val.(*segment).path
-	_ = os.Remove(segmentFilePath)
-	q.closeAndRemoveOffsetTracker(offsetFilePath(segmentFilePath))
+	if len(segment_.path) > 0 {
+		_ = os.Remove(segment_.path)
+		q.closeAndRemoveOffsetTracker(offsetFilePath(segment_.path))
+	}
 
 	return false
 }

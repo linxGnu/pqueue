@@ -82,6 +82,9 @@ func NewSegment(w io.WriteCloser, entryFormat common.EntryFormat, maxEntries uin
 
 // Close segment.
 func (s *Segment) Close() (err error) {
+	if s == nil {
+		return
+	}
 	if s.r != nil {
 		err = s.r.Close()
 	}
