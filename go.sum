@@ -1,6 +1,10 @@
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/grandecola/bigqueue v0.5.0 h1:Ln02FkusfWav4FDeIs+7D+VhnC1aBZBqZIUN7f6HRXo=
+github.com/grandecola/bigqueue v0.5.0/go.mod h1:2gzUVpbn5/aaGa9f45OWQvClbohutIIqztheSS5w4u8=
+github.com/grandecola/mmap v0.6.0 h1:dYrZWLay1rDlmlsGsSIoXGQ+JMu/t2ZnKt8vT1h+1o0=
+github.com/grandecola/mmap v0.6.0/go.mod h1:q5v9jpm393rcp5PXE6biArHKc2SWJBpXjfxSRtQMtNU=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
 github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
