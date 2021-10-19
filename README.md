@@ -90,30 +90,30 @@ cpu: AMD Ryzen 9 3950X 16-Core Processor
 PASS
 benchmark                          iter        time/iter      bytes alloc            allocs
 ---------                          ----        ---------      -----------            ------
-BenchmarkPQueueWriting_16-32        120       9.80 ms/op      110352 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_16-32        1    1175.07 ms/op        9496 B/op      31 allocs/op
-BenchmarkPQueueWriting_64-32        124      10.21 ms/op      110401 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_64-32        2    1139.45 ms/op        9256 B/op      28 allocs/op
-BenchmarkPQueueWriting_256-32       111      10.12 ms/op      110592 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_256-32       1    1634.83 ms/op        9544 B/op      29 allocs/op
-BenchmarkPQueueWriting_2048-32       61      20.57 ms/op      112386 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_2048-32      1    1574.80 ms/op       11816 B/op      34 allocs/op
-BenchmarkPQueueWriting_16K-32        12     102.94 ms/op      126728 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_16K-32       1   10629.59 ms/op       27976 B/op      53 allocs/op
-BenchmarkPQueueWriting_64K-32         3     337.53 ms/op      175882 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_64K-32       1   31777.68 ms/op       76192 B/op      47 allocs/op
-BenchmarkPQueueRW_16-32              20      59.58 ms/op      277085 B/op   20234 allocs/op
-BenchmarkBigQueueRW_16-32             1    1947.69 ms/op      170136 B/op   10032 allocs/op
-BenchmarkPQueueRW_64-32              21      59.42 ms/op      277246 B/op   20234 allocs/op
-BenchmarkBigQueueRW_64-32             1    2173.95 ms/op      649416 B/op   10030 allocs/op
-BenchmarkPQueueRW_256-32             19      61.30 ms/op      277865 B/op   20234 allocs/op
-BenchmarkBigQueueRW_256-32            1    3607.89 ms/op     2569608 B/op   10030 allocs/op
-BenchmarkPQueueRW_2048-32            13      85.91 ms/op      283160 B/op   20234 allocs/op
-BenchmarkBigQueueRW_2048-32           1    7354.76 ms/op    20491592 B/op   10032 allocs/op
-BenchmarkPQueueRW_16K-32              4     286.54 ms/op      326164 B/op   20234 allocs/op
-BenchmarkBigQueueRW_16K-32            1   35730.44 ms/op   163871304 B/op   10082 allocs/op
-BenchmarkPQueueRW_64K-32              2     672.61 ms/op      473672 B/op   20234 allocs/op
-BenchmarkBigQueueRW_64K-32            1   98015.51 ms/op   655448080 B/op   10173 allocs/op
+BenchmarkPQueueWriting_16-32        124       9.51 ms/op      102634 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_16-32        1    1115.03 ms/op        5096 B/op      29 allocs/op
+BenchmarkPQueueWriting_64-32        133      10.01 ms/op      102433 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_64-32        2     958.87 ms/op       11308 B/op      30 allocs/op
+BenchmarkPQueueWriting_256-32       120      10.51 ms/op      102616 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_256-32       1    1170.48 ms/op        5336 B/op      29 allocs/op
+BenchmarkPQueueWriting_2048-32       60      20.25 ms/op      104512 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_2048-32      1    2046.51 ms/op        7128 B/op      29 allocs/op
+BenchmarkPQueueWriting_16K-32        10     100.61 ms/op      120151 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_16K-32       1    9634.72 ms/op       29776 B/op      32 allocs/op
+BenchmarkPQueueWriting_64K-32         4     349.45 ms/op      171772 B/op   10147 allocs/op
+BenchmarkBigQueueWriting_64K-32       1   29679.39 ms/op       83848 B/op      87 allocs/op
+BenchmarkPQueueRW_16-32              24      49.06 ms/op      273011 B/op   20238 allocs/op
+BenchmarkBigQueueRW_16-32             1   18573.37 ms/op      176096 B/op   10061 allocs/op
+BenchmarkPQueueRW_64-32              22      52.32 ms/op      272786 B/op   20236 allocs/op
+BenchmarkBigQueueRW_64-32             1   20714.97 ms/op      648248 B/op   10059 allocs/op
+BenchmarkPQueueRW_256-32             20      54.85 ms/op      273814 B/op   20245 allocs/op
+BenchmarkBigQueueRW_256-32            1   18967.45 ms/op     2573648 B/op   10033 allocs/op
+BenchmarkPQueueRW_2048-32            13      85.23 ms/op      279630 B/op   20240 allocs/op
+BenchmarkBigQueueRW_2048-32           1   23003.57 ms/op    20511568 B/op   10201 allocs/op
+BenchmarkPQueueRW_16K-32              4     286.53 ms/op      319328 B/op   20247 allocs/op
+BenchmarkBigQueueRW_16K-32            1   43056.72 ms/op   163882064 B/op   10161 allocs/op
+BenchmarkPQueueRW_64K-32              2     674.56 ms/op      473848 B/op   20236 allocs/op
+BenchmarkBigQueueRW_64K-32            1   71556.97 ms/op   655469672 B/op   10357 allocs/op
 ```
 
 ### SSD - Samsung SSD 850 Pro
@@ -133,30 +133,30 @@ cpu: AMD Ryzen 9 3950X 16-Core Processor
 PASS
 benchmark                          iter        time/iter      bytes alloc            allocs
 ---------                          ----        ---------      -----------            ------
-BenchmarkPQueueWriting_16-32        121       9.42 ms/op      110353 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_16-32        7     144.38 ms/op        9290 B/op      28 allocs/op
-BenchmarkPQueueWriting_64-32        120       9.65 ms/op      110401 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_64-32        9     151.07 ms/op        9331 B/op      28 allocs/op
-BenchmarkPQueueWriting_256-32       116      10.87 ms/op      110592 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_256-32       5     215.36 ms/op        9601 B/op      29 allocs/op
-BenchmarkPQueueWriting_2048-32       57      20.74 ms/op      112385 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_2048-32      3     375.53 ms/op       11240 B/op      28 allocs/op
-BenchmarkPQueueWriting_16K-32        12     103.00 ms/op      126720 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_16K-32       1    1878.35 ms/op       25576 B/op      28 allocs/op
-BenchmarkPQueueWriting_64K-32         3     337.99 ms/op      175877 B/op   10147 allocs/op
-BenchmarkBigQueueWriting_64K-32       1    6358.75 ms/op       77728 B/op      63 allocs/op
-BenchmarkPQueueRW_16-32              19      58.16 ms/op      277122 B/op   20234 allocs/op
-BenchmarkBigQueueRW_16-32             3     360.04 ms/op      170328 B/op   10038 allocs/op
-BenchmarkPQueueRW_64-32              19      57.95 ms/op      277384 B/op   20235 allocs/op
-BenchmarkBigQueueRW_64-32             4     423.16 ms/op      649608 B/op   10030 allocs/op
-BenchmarkPQueueRW_256-32             18      62.64 ms/op      277802 B/op   20234 allocs/op
-BenchmarkBigQueueRW_256-32            2     668.86 ms/op     2570040 B/op   10031 allocs/op
-BenchmarkPQueueRW_2048-32            13      87.55 ms/op      283312 B/op   20234 allocs/op
-BenchmarkBigQueueRW_2048-32           1    1347.92 ms/op    20491400 B/op   10030 allocs/op
-BenchmarkPQueueRW_16K-32              4     272.05 ms/op      326576 B/op   20236 allocs/op
-BenchmarkBigQueueRW_16K-32            1    5454.91 ms/op   163870824 B/op   10077 allocs/op
-BenchmarkPQueueRW_64K-32              2     662.18 ms/op      474304 B/op   20241 allocs/op
-BenchmarkBigQueueRW_64K-32            1   16202.24 ms/op   655453216 B/op   10231 allocs/op
+BenchmarkPQueueWriting_16-32        122       9.91 ms/op      102507 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_16-32        9     117.01 ms/op        4186 B/op      27 allocs/op
+BenchmarkPQueueWriting_64-32        120       9.62 ms/op      102424 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_64-32        8     138.96 ms/op        4634 B/op      28 allocs/op
+BenchmarkPQueueWriting_256-32       106      10.79 ms/op      102647 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_256-32       5     242.03 ms/op        2052 B/op      27 allocs/op
+BenchmarkPQueueWriting_2048-32       57      21.44 ms/op      104817 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_2048-32      3     354.33 ms/op       10029 B/op      30 allocs/op
+BenchmarkPQueueWriting_16K-32        10     104.84 ms/op      120153 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_16K-32       1    1963.32 ms/op       30640 B/op      41 allocs/op
+BenchmarkPQueueWriting_64K-32         3     349.73 ms/op      170405 B/op   10146 allocs/op
+BenchmarkBigQueueWriting_64K-32       1    6077.02 ms/op       86728 B/op     117 allocs/op
+BenchmarkPQueueRW_16-32              26      51.32 ms/op      271447 B/op   20240 allocs/op
+BenchmarkBigQueueRW_16-32             1    5947.32 ms/op      173408 B/op   10033 allocs/op
+BenchmarkPQueueRW_64-32              22      51.97 ms/op      272084 B/op   20240 allocs/op
+BenchmarkBigQueueRW_64-32             1    5586.13 ms/op      653456 B/op   10033 allocs/op
+BenchmarkPQueueRW_256-32             20      55.29 ms/op      273002 B/op   20241 allocs/op
+BenchmarkBigQueueRW_256-32            1    6269.66 ms/op     2568792 B/op   10066 allocs/op
+BenchmarkPQueueRW_2048-32            13      81.82 ms/op      278406 B/op   20240 allocs/op
+BenchmarkBigQueueRW_2048-32           1    6099.57 ms/op    20520656 B/op   10289 allocs/op
+BenchmarkPQueueRW_16K-32              4     287.24 ms/op      327796 B/op   20252 allocs/op
+BenchmarkBigQueueRW_16K-32            1    9192.42 ms/op   163882128 B/op   10155 allocs/op
+BenchmarkPQueueRW_64K-32              2     707.96 ms/op      473884 B/op   20277 allocs/op
+BenchmarkBigQueueRW_64K-32            1   14538.79 ms/op   655459096 B/op   10252 allocs/op
 ```
 
 #### NVMe - Corsair Force MP600
@@ -176,28 +176,28 @@ cpu: AMD Ryzen 9 3950X 16-Core Processor
 PASS
 benchmark                          iter      time/iter      bytes alloc            allocs
 ---------                          ----      ---------      -----------            ------
-BenchmarkPQueueWriting_16-32        219     5.50 ms/op      109888 B/op   10143 allocs/op
-BenchmarkBigQueueWriting_16-32      801     1.50 ms/op        9158 B/op      28 allocs/op
-BenchmarkPQueueWriting_64-32        207     5.04 ms/op      109934 B/op   10143 allocs/op
-BenchmarkBigQueueWriting_64-32      676     1.79 ms/op        9191 B/op      28 allocs/op
-BenchmarkPQueueWriting_256-32       207     5.95 ms/op      110128 B/op   10143 allocs/op
-BenchmarkBigQueueWriting_256-32     388     2.92 ms/op        9370 B/op      28 allocs/op
-BenchmarkPQueueWriting_2048-32      103    12.25 ms/op      111922 B/op   10143 allocs/op
-BenchmarkBigQueueWriting_2048-32     81    13.76 ms/op       11160 B/op      28 allocs/op
-BenchmarkPQueueWriting_16K-32        18    59.48 ms/op      126258 B/op   10143 allocs/op
-BenchmarkBigQueueWriting_16K-32      10   100.79 ms/op       25496 B/op      28 allocs/op
-BenchmarkPQueueWriting_64K-32         5   200.40 ms/op      175411 B/op   10143 allocs/op
-BenchmarkBigQueueWriting_64K-32       3   344.00 ms/op       81168 B/op     100 allocs/op
-BenchmarkPQueueRW_16-32              31    36.70 ms/op      275965 B/op   20230 allocs/op
-BenchmarkBigQueueRW_16-32           211     5.67 ms/op      169335 B/op   10030 allocs/op
-BenchmarkPQueueRW_64-32              31    37.20 ms/op      276074 B/op   20230 allocs/op
-BenchmarkBigQueueRW_64-32           201     6.05 ms/op      649455 B/op   10030 allocs/op
-BenchmarkPQueueRW_256-32             28    38.39 ms/op      276709 B/op   20230 allocs/op
-BenchmarkBigQueueRW_256-32          146     8.20 ms/op     2569746 B/op   10031 allocs/op
-BenchmarkPQueueRW_2048-32            20    56.70 ms/op      281989 B/op   20230 allocs/op
-BenchmarkBigQueueRW_2048-32          45    25.95 ms/op    20491447 B/op   10031 allocs/op
-BenchmarkPQueueRW_16K-32              6   190.07 ms/op      325002 B/op   20230 allocs/op
-BenchmarkBigQueueRW_16K-32            7   156.85 ms/op   163868088 B/op   10057 allocs/op
-BenchmarkPQueueRW_64K-32              3   447.33 ms/op      472549 B/op   20231 allocs/op
-BenchmarkBigQueueRW_64K-32            2   552.55 ms/op   655448168 B/op   10174 allocs/op
+BenchmarkPQueueWriting_16-32        225     5.23 ms/op      101927 B/op   10142 allocs/op
+BenchmarkBigQueueWriting_16-32     1089     1.03 ms/op         988 B/op      27 allocs/op
+BenchmarkPQueueWriting_64-32        232     5.15 ms/op      102055 B/op   10142 allocs/op
+BenchmarkBigQueueWriting_64-32      828     1.37 ms/op         984 B/op      27 allocs/op
+BenchmarkPQueueWriting_256-32       190     5.98 ms/op      102279 B/op   10142 allocs/op
+BenchmarkBigQueueWriting_256-32     482     2.50 ms/op        1176 B/op      27 allocs/op
+BenchmarkPQueueWriting_2048-32       97    11.93 ms/op      104170 B/op   10142 allocs/op
+BenchmarkBigQueueWriting_2048-32     80    13.67 ms/op        3508 B/op      27 allocs/op
+BenchmarkPQueueWriting_16K-32        18    64.92 ms/op      118953 B/op   10142 allocs/op
+BenchmarkBigQueueWriting_16K-32      10   101.22 ms/op       20366 B/op      30 allocs/op
+BenchmarkPQueueWriting_64K-32         5   209.72 ms/op      167192 B/op   10142 allocs/op
+BenchmarkBigQueueWriting_64K-32       3   364.77 ms/op       70128 B/op      56 allocs/op
+BenchmarkPQueueRW_16-32              36    31.39 ms/op      271413 B/op   20237 allocs/op
+BenchmarkBigQueueRW_16-32           100    11.76 ms/op      163011 B/op   10030 allocs/op
+BenchmarkPQueueRW_64-32              36    31.89 ms/op      270448 B/op   20241 allocs/op
+BenchmarkBigQueueRW_64-32            99    12.34 ms/op      647321 B/op   10033 allocs/op
+BenchmarkPQueueRW_256-32             33    33.75 ms/op      272010 B/op   20243 allocs/op
+BenchmarkBigQueueRW_256-32           81    14.75 ms/op     2571970 B/op   10035 allocs/op
+BenchmarkPQueueRW_2048-32            20    52.16 ms/op      278024 B/op   20237 allocs/op
+BenchmarkBigQueueRW_2048-32          33    35.82 ms/op    20497430 B/op   10054 allocs/op
+BenchmarkPQueueRW_16K-32              5   200.83 ms/op      323212 B/op   20244 allocs/op
+BenchmarkBigQueueRW_16K-32            6   175.49 ms/op   163876804 B/op   10105 allocs/op
+BenchmarkPQueueRW_64K-32              3   471.45 ms/op      469130 B/op   20253 allocs/op
+BenchmarkBigQueueRW_64K-32            2   570.38 ms/op   655472440 B/op   10391 allocs/op
 ```
