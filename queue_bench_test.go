@@ -3,10 +3,10 @@ package pqueue
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/linxGnu/pqueue/common"
 	"github.com/linxGnu/pqueue/entry"
@@ -257,9 +257,9 @@ func benchmarkPQueue(b *testing.B, size int, entrySize int, alsoRead bool) {
 
 					if ok := q.Dequeue(&e); ok {
 						atomic.AddUint32(&total, 1)
-					} else {
-						time.Sleep(500 * time.Microsecond)
 					}
+
+					runtime.Gosched()
 				}
 			}()
 		}
@@ -312,10 +312,9 @@ func benchmarkBigQueue(b *testing.B, size int, entrySize int, alsoRead bool) {
 
 					if _, err := q.Dequeue(); err == nil {
 						atomic.AddUint32(&total, 1)
-					} else {
-						time.Sleep(500 * time.Microsecond)
 					}
 
+					runtime.Gosched()
 				}
 			}()
 		}
