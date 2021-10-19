@@ -119,20 +119,20 @@ func TestQueueRace(t *testing.T) {
 
 	// prepare some files
 	{
-		f1, err := os.CreateTemp(dataDir, segPrefix)
-		require.NoError(t, err)
+		f1, e := os.CreateTemp(dataDir, segPrefix)
+		require.NoError(t, e)
 		_ = f1.Close()
 
-		f2, err := os.CreateTemp(dataDir, segPrefix)
-		require.NoError(t, err)
-		_, err = f2.Write([]byte{0, 1, 2, 3})
-		require.NoError(t, err)
+		f2, e := os.CreateTemp(dataDir, segPrefix)
+		require.NoError(t, e)
+		_, e = f2.Write([]byte{0, 1, 2, 3})
+		require.NoError(t, e)
 		_ = f2.Close()
 
-		f3, err := os.CreateTemp(dataDir, segPrefix)
-		require.NoError(t, err)
-		_, err = f3.Write([]byte{0, 0, 0, 0})
-		require.NoError(t, err)
+		f3, e := os.CreateTemp(dataDir, segPrefix)
+		require.NoError(t, e)
+		_, e = f3.Write([]byte{0, 0, 0, 0})
+		require.NoError(t, e)
 		_ = f3.Close()
 	}
 

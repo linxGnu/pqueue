@@ -10,8 +10,8 @@ import (
 )
 
 type file struct {
-	path    string
 	modTime time.Time
+	path    string
 }
 
 func load(settings QueueSettings, segHeader segmentHeadWriter) (*queue, error) {
