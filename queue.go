@@ -20,25 +20,22 @@ const (
 )
 
 type segment struct {
-	readable bool
 	seg      segmentPkg.Segment
 	path     string
+	readable bool
 }
 
 type queue struct {
-	segments      *list.List // item: *segment
+	rLock         sync.Mutex
+	wLock         sync.RWMutex
 	segHeadWriter segmentHeadWriter
-	settings      QueueSettings
-
-	rLock sync.Mutex
-	peek  entry.Entry
-
-	wLock sync.RWMutex
-
+	segments      *list.List
 	offsetTracker struct {
 		f      *os.File
 		offset int64
 	}
+	peek     entry.Entry
+	settings QueueSettings
 }
 
 func (q *queue) Close() (err error) {

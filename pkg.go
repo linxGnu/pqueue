@@ -14,10 +14,10 @@ const (
 
 // QueueSettings are settings for queue.
 type QueueSettings struct {
+	DataDir              string
 	SegmentFormat        common.SegmentFormat
 	EntryFormat          common.EntryFormat
 	MaxEntriesPerSegment uint32
-	DataDir              string
 }
 
 // Queue interface.
