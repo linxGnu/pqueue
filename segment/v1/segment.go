@@ -125,12 +125,38 @@ func (s *Segment) writeEntry(e entry.Entry) (common.ErrCode, error) {
 	s.wLock.Lock()
 	defer s.wLock.Unlock()
 
-	if s.numEntries == s.maxEntries {
+	if s.numEntries >= s.maxEntries {
 		return common.SegmentNoMoreWrite, nil
 	}
 
 	code, err := s.w.WriteEntry(e)
-	if (code == common.NoError && atomic.AddUint32(&s.numEntries, 1) == s.maxEntries) ||
+	if (code == common.NoError && atomic.AddUint32(&s.numEntries, 1) >= s.maxEntries) ||
+		code == common.SegmentCorrupted {
+		_ = s.w.Close()
+	}
+
+	return code, err
+}
+
+// WriteBatch to segment.
+func (s *Segment) WriteBatch(b entry.Batch) (common.ErrCode, error) {
+	// check entry size
+	if !b.ValidateSize(common.MaxEntrySize) {
+		return common.EntryTooBig, common.ErrEntryTooBig
+	}
+	return s.writeBatch(b)
+}
+
+func (s *Segment) writeBatch(b entry.Batch) (common.ErrCode, error) {
+	s.wLock.Lock()
+	defer s.wLock.Unlock()
+
+	if s.numEntries >= s.maxEntries {
+		return common.SegmentNoMoreWrite, nil
+	}
+
+	code, err := s.w.WriteBatch(b)
+	if (code == common.NoError && atomic.AddUint32(&s.numEntries, uint32(b.Len())) >= s.maxEntries) ||
 		code == common.SegmentCorrupted {
 		_ = s.w.Close()
 	}
@@ -145,11 +171,12 @@ func (s *Segment) ReadEntry(e *entry.Entry) (common.ErrCode, int, error) {
 
 	if !s.readOnly {
 		// readable?
-		if s.offset == s.maxEntries {
-			_ = s.r.Close()
-			return common.SegmentNoMoreReadStrong, 0, nil
-		}
 		if s.offset == atomic.LoadUint32(&s.numEntries) {
+			if s.offset >= s.maxEntries {
+				_ = s.r.Close()
+				return common.SegmentNoMoreReadStrong, 0, nil
+			}
+
 			return common.SegmentNoMoreReadWeak, 0, nil
 		}
 

@@ -37,7 +37,16 @@ func (s *segmentWriter) Close() (err error) {
 // WriteEntry to underlying writer.
 func (s *segmentWriter) WriteEntry(e entry.Entry) (common.ErrCode, error) {
 	// check size
-	_, err := e.Marshal(s.w, s.entryFormat)
+	_, err := e.Marshal(s.w, s.entryFormat, true)
+	if err == nil {
+		return common.NoError, nil
+	}
+	return common.SegmentCorrupted, err
+}
+
+// WriteEntry to underlying writer.
+func (s *segmentWriter) WriteBatch(b entry.Batch) (common.ErrCode, error) {
+	_, err := b.Marshal(s.w, s.entryFormat)
 	if err == nil {
 		return common.NoError, nil
 	}

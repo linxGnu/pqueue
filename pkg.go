@@ -24,6 +24,7 @@ type QueueSettings struct {
 type Queue interface {
 	io.Closer
 	Enqueue(entry.Entry) error
+	EnqueueBatch(entry.Batch) error
 	Dequeue(*entry.Entry) bool
 	Peek(*entry.Entry) bool
 }

@@ -38,6 +38,11 @@ func TestSegment(t *testing.T) {
 }
 
 func TestNewSegmentReadWrite(t *testing.T) {
+	t.Run("Closing", func(t *testing.T) {
+		var s *Segment
+		require.NoError(t, s.Close())
+	})
+
 	t.Run("Happy", func(t *testing.T) {
 		buffer := bytes.NewBuffer(make([]byte, 0, 16))
 
@@ -91,6 +96,51 @@ func TestNewSegmentReadWrite(t *testing.T) {
 		require.NoError(t, s.SeekToRead(0))
 	})
 
+	t.Run("HappyBatch", func(t *testing.T) {
+		buffer := bytes.NewBuffer(make([]byte, 0, 16))
+
+		s, err := NewSegment(&mockWriter{Buffer: buffer}, common.EntryV1, 2)
+		require.NoError(t, err)
+
+		// reading
+		n, err := s.Reading(newMockReadSeeker(buffer))
+		require.NoError(t, err)
+		require.Equal(t, 4, n)
+
+		b := entry.NewBatch(3)
+		b.Append([]byte("alpha"))
+		b.Append([]byte("beta"))
+		b.Append([]byte("gama"))
+
+		code, err := s.WriteBatch(b)
+		require.NoError(t, err)
+		require.Equal(t, common.NoError, code)
+
+		var e entry.Entry
+		code, n, err = s.ReadEntry(&e)
+		require.NoError(t, err)
+		require.Equal(t, common.NoError, code)
+		require.Equal(t, "alpha", string(e))
+		require.Equal(t, 13, n)
+
+		code, n, err = s.ReadEntry(&e)
+		require.NoError(t, err)
+		require.Equal(t, common.NoError, code)
+		require.Equal(t, "beta", string(e))
+		require.Equal(t, 12, n)
+
+		code, n, err = s.ReadEntry(&e)
+		require.NoError(t, err)
+		require.Equal(t, common.NoError, code)
+		require.Equal(t, "gama", string(e))
+		require.Equal(t, 12, n)
+
+		code, n, err = s.ReadEntry(&e)
+		require.NoError(t, err)
+		require.Equal(t, common.SegmentNoMoreReadStrong, code)
+		require.Equal(t, 0, n)
+	})
+
 	t.Run("WriteError", func(t *testing.T) {
 		s, err := NewSegment(&mockWriter{Buffer: bytes.NewBuffer(make([]byte, 0, 16))}, common.EntryV1, 2)
 		require.NoError(t, err)
@@ -103,6 +153,13 @@ func TestNewSegmentReadWrite(t *testing.T) {
 		require.Equal(t, common.NoError, code)
 
 		code, err = s.WriteEntry([]byte("alpha"))
+		require.Error(t, err)
+		require.Equal(t, common.SegmentCorrupted, code)
+
+		b := entry.NewBatch(2)
+		b.Append([]byte{1, 2, 3})
+
+		code, err = s.WriteBatch(b)
 		require.Error(t, err)
 		require.Equal(t, common.SegmentCorrupted, code)
 	})

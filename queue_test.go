@@ -188,7 +188,7 @@ func TestQueueRace(t *testing.T) {
 	}
 
 	ch := make(chan uint32, 1)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 4; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -199,6 +199,26 @@ func TestQueueRace(t *testing.T) {
 
 				common.Endianese.PutUint32(buf, data)
 				err := q.Enqueue(buf)
+				require.NoError(t, err)
+			}
+		}()
+	}
+
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			buf := make([]byte, 4<<10)
+			b := entry.NewBatch(1)
+			for data := range ch {
+				time.Sleep(time.Millisecond)
+
+				common.Endianese.PutUint32(buf, data)
+				b.Reset()
+				b.Append(buf)
+
+				err := q.EnqueueBatch(b)
 				require.NoError(t, err)
 			}
 		}()

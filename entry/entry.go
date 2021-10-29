@@ -19,6 +19,7 @@ type Reader interface {
 type Writer interface {
 	io.Closer
 	WriteEntry(Entry) (common.ErrCode, error)
+	WriteBatch(Batch) (common.ErrCode, error)
 }
 
 // WriteFlusher interface.
@@ -31,10 +32,10 @@ type WriteFlusher interface {
 type Entry []byte
 
 // Marshal writes entry to writer.
-func (e Entry) Marshal(w WriteFlusher, format common.EntryFormat) (code common.ErrCode, err error) {
+func (e Entry) Marshal(w WriteFlusher, format common.EntryFormat, flushable bool) (code common.ErrCode, err error) {
 	switch format {
 	case common.EntryV1:
-		return e.marshalV1(w)
+		return e.marshalV1(w, flushable)
 
 	default:
 		return common.EntryUnsupportedFormat, common.ErrEntryUnsupportedFormat
@@ -42,12 +43,14 @@ func (e Entry) Marshal(w WriteFlusher, format common.EntryFormat) (code common.E
 }
 
 // [Length - uint32][Checksum - uint32][Payload - bytes]
-func (e Entry) marshalV1(w WriteFlusher) (code common.ErrCode, err error) {
+func (e Entry) marshalV1(w WriteFlusher, flushable bool) (code common.ErrCode, err error) {
 	var buf [8]byte
 	common.Endianese.PutUint64(buf[:], uint64(len(e))<<32|uint64(crc32.ChecksumIEEE(e)))
 	if _, err = w.Write(buf[:]); err == nil {
 		if _, err = w.Write(e); err == nil {
-			err = w.Flush()
+			if flushable {
+				err = w.Flush()
+			}
 		}
 	}
 
@@ -136,4 +139,66 @@ func (e *Entry) alloc(expected int) (data []byte) {
 		data = make([]byte, expected)
 	}
 	return
+}
+
+// Batch of entries.
+type Batch struct {
+	entries []Entry
+}
+
+// NewBatch with capacity.
+func NewBatch(capacity int) Batch {
+	return Batch{
+		entries: make([]Entry, 0, capacity),
+	}
+}
+
+// ValidateSize checks size of entries.
+func (b *Batch) ValidateSize(size int) bool {
+	for _, e := range b.entries {
+		if len(e) > size {
+			return false
+		}
+	}
+	return true
+}
+
+// Len is number of entries inside Batch.
+func (b *Batch) Len() int {
+	return len(b.entries)
+}
+
+// Append an entry.
+func (b *Batch) Append(e Entry) {
+	if len(e) > 0 {
+		b.entries = append(b.entries, e)
+	}
+}
+
+// Marshal into writer.
+func (b *Batch) Marshal(w WriteFlusher, format common.EntryFormat) (code common.ErrCode, err error) {
+	if b.Len() > 0 {
+		for _, e := range b.entries {
+			if code, err = e.Marshal(w, format, false); err != nil {
+				return code, err
+			}
+		}
+
+		if err = w.Flush(); err != nil {
+			code = common.EntryWriteErr
+		} else {
+			code = common.NoError
+		}
+	}
+	return
+}
+
+// Reset batch.
+func (b *Batch) Reset() {
+	if b.Len() > 0 {
+		for i := range b.entries {
+			b.entries[i] = nil
+		}
+		b.entries = b.entries[:0]
+	}
 }

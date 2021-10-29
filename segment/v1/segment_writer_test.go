@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/linxGnu/pqueue/common"
+	"github.com/linxGnu/pqueue/entry"
 
 	"github.com/stretchr/testify/require"
 )
@@ -59,6 +60,25 @@ func TestSegmentWriter(t *testing.T) {
 		require.NoError(t, w.Close())
 	})
 
+	t.Run("HappyBatch", func(t *testing.T) {
+		w := newSegmentWriter(
+			&mockWriter{Buffer: bytes.NewBuffer(make([]byte, 0, 128))},
+			common.EntryV1)
+
+		b := entry.NewBatch(2)
+		b.Append([]byte{1, 2, 3})
+
+		code, err := w.WriteBatch(b)
+		require.NoError(t, err)
+		require.Equal(t, common.NoError, code)
+
+		code, err = w.WriteBatch(entry.Batch{})
+		require.NoError(t, err)
+		require.Equal(t, common.NoError, code)
+
+		require.NoError(t, w.Close())
+	})
+
 	t.Run("CloseError", func(t *testing.T) {
 		m := newSegmentWriter(&mockWriterErr{onWrite: true}, common.EntryV1)
 		require.Error(t, m.Close())
@@ -68,6 +88,13 @@ func TestSegmentWriter(t *testing.T) {
 		w := newSegmentWriter(&mockWriterErr{onWrite: true}, common.EntryV1)
 
 		code, err := w.WriteEntry([]byte{1, 2, 3})
+		require.Error(t, err)
+		require.Equal(t, common.SegmentCorrupted, code)
+
+		b := entry.NewBatch(2)
+		b.Append([]byte{1, 2, 3})
+
+		code, err = w.WriteBatch(b)
 		require.Error(t, err)
 		require.Equal(t, common.SegmentCorrupted, code)
 	})

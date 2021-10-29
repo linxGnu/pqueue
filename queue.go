@@ -281,6 +281,40 @@ func (q *queue) enqueue(e entry.Entry) error {
 	return common.ErrQueueCorrupted
 }
 
+func (q *queue) EnqueueBatch(b entry.Batch) error {
+	q.wLock.Lock()
+	err := q.enqueueBatch(b)
+	q.wLock.Unlock()
+	return err
+}
+
+func (q *queue) enqueueBatch(b entry.Batch) error {
+	for attempt := 0; attempt < 2; attempt++ {
+		back := q.segments.Back()
+		if back == nil {
+			return common.ErrQueueCorrupted
+		}
+
+		tail := back.Value.(*segment)
+
+		code, err := tail.seg.WriteBatch(b)
+		switch code {
+		case common.NoError, common.EntryTooBig:
+			return err
+
+		default: // full? corrupted?
+			// try to write new one
+			seg, err := q.newSegment()
+			if err != nil {
+				return err
+			}
+			q.segments.PushBack(seg)
+		}
+	}
+
+	return common.ErrQueueCorrupted
+}
+
 func (q *queue) newSegment() (*segment, error) {
 	f, err := os.CreateTemp(q.settings.DataDir, segPrefix)
 	if err != nil {
