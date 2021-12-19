@@ -197,31 +197,31 @@ func (q *queue) readEntryFromHead(head *segment, front *list.Element, dst *entry
 	}
 }
 
-func (q *queue) removeSegment(seg *list.Element) bool {
+func (q *queue) removeSegment(e *list.Element) bool {
 	q.wLock.RLock()
 
 	// do not remove back/tail of segment list
-	if seg == q.segments.Back() {
+	if e == q.segments.Back() {
 		q.wLock.RUnlock()
 		return true
 	}
 
 	// remove from list
-	val := q.segments.Remove(seg)
+	val := q.segments.Remove(e)
 
 	q.wLock.RUnlock()
 
-	segment_ := val.(*segment)
+	seg := val.(*segment)
 
 	// close segment
-	if segment_.seg != nil {
-		_ = segment_.seg.Close()
+	if seg.seg != nil {
+		_ = seg.seg.Close()
 	}
 
 	// remove underlying file
-	if len(segment_.path) > 0 {
-		_ = os.Remove(segment_.path)
-		q.closeAndRemoveOffsetTracker(offsetFilePath(segment_.path))
+	if len(seg.path) > 0 {
+		_ = os.Remove(seg.path)
+		q.closeAndRemoveOffsetTracker(offsetFilePath(seg.path))
 	}
 
 	return false
@@ -352,7 +352,7 @@ func (q *queue) newSegment() (*segment, error) {
 
 func loadOffsetTracker(path string) (offset int64, f *os.File, err error) {
 	for attempt := 0; attempt < 2; attempt++ {
-		f, err = os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0644)
+		f, err = os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o644)
 		if err != nil {
 			return
 		}

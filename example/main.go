@@ -14,7 +14,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer q.Close() // it's important to close the queue before exit
+	defer func() {
+		_ = q.Close() // it's important to close the queue before exit
+	}()
 
 	// enqueue
 	if err = q.Enqueue([]byte{1, 2, 3, 4}); err != nil {

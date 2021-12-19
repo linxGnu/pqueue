@@ -240,7 +240,7 @@ func BenchmarkBigQueueRW_64K(b *testing.B) {
 func prepareDataDir(dir string) string {
 	dataDir := filepath.Join(tmpDir, dir)
 	_ = os.RemoveAll(dataDir)
-	_ = os.MkdirAll(dataDir, 0777)
+	_ = os.MkdirAll(dataDir, 0o777)
 	return dataDir
 }
 
@@ -256,11 +256,13 @@ func benchmarkPQueue(b *testing.B, size int, entrySize int, alsoRead bool) {
 
 	dataDir := prepareDataDir(path)
 	defer func() {
-		os.RemoveAll(dataDir)
+		_ = os.RemoveAll(dataDir)
 	}()
 
 	q, _ := New(dataDir, 2000)
-	defer q.Close()
+	defer func() {
+		_ = q.Close()
+	}()
 
 	b.StartTimer()
 
@@ -320,14 +322,16 @@ func benchmarkBigQueue(b *testing.B, size int, entrySize int, alsoRead bool) {
 
 	dataDir := prepareDataDir(path)
 	defer func() {
-		os.RemoveAll(dataDir)
+		_ = os.RemoveAll(dataDir)
 	}()
 
 	q, _ := bigqueue.NewMmapQueue(dataDir,
 		bigqueue.SetPeriodicFlushOps(flushOps),
 		bigqueue.SetMaxInMemArenas(256<<20),
 		bigqueue.SetArenaSize(512<<20))
-	defer q.Close()
+	defer func() {
+		_ = q.Close()
+	}()
 
 	b.StartTimer()
 

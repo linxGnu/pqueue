@@ -14,9 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	tmpDir = os.TempDir()
-)
+var tmpDir = os.TempDir()
 
 func TestSegment(t *testing.T) {
 	t.Run("NewSegmentFailure", func(t *testing.T) {
@@ -249,11 +247,11 @@ func TestSegmentRace(t *testing.T) {
 	tmpFile := filepath.Join(tmpDir, "segment.tmp")
 
 	// create/trunc it
-	f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	require.NoError(t, err)
 
 	// remove when done
-	defer os.Remove(tmpFile)
+	defer func() { _ = os.Remove(tmpFile) }()
 
 	// open temp file for reading
 	fr, err := os.Open(tmpFile)
@@ -265,7 +263,9 @@ func TestSegmentRace(t *testing.T) {
 	n, err := s.Reading(fr)
 	require.NoError(t, err)
 	require.Equal(t, 4, n)
-	defer s.Close()
+	defer func() {
+		_ = s.Close()
+	}()
 
 	// start reader
 	var wg sync.WaitGroup

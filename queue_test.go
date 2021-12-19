@@ -34,24 +34,28 @@ func (m *mockWriterErr) Write(data []byte) (int, error) {
 	}
 	return m.buf.Write(data)
 }
+
 func (m *mockWriterErr) Sync() error {
 	if m.onSync {
 		return fmt.Errorf("fake error")
 	}
 	return nil
 }
+
 func (m *mockWriterErr) Close() error {
 	if m.onClose {
 		return fmt.Errorf("fake error")
 	}
 	return nil
 }
+
 func (m *mockWriterErr) WriteHeader(io.WriteCloser, common.SegmentFormat) error {
 	if m.onSegmentHeader {
 		return fmt.Errorf("fake error")
 	}
 	return nil
 }
+
 func (m *mockWriterErr) ReadHeader(r io.ReadCloser) (format common.SegmentFormat, err error) {
 	return
 }
@@ -113,9 +117,11 @@ func TestQueueRace(t *testing.T) {
 	dataDir := filepath.Join(tmpDir, "pqueue_race_test")
 	_ = os.RemoveAll(dataDir)
 
-	err := os.MkdirAll(dataDir, 0777)
+	err := os.MkdirAll(dataDir, 0o777)
 	require.NoError(t, err)
-	defer os.RemoveAll(dataDir)
+	defer func() {
+		_ = os.RemoveAll(dataDir)
+	}()
 
 	// prepare some files
 	{
@@ -138,7 +144,9 @@ func TestQueueRace(t *testing.T) {
 
 	q, err := New(dataDir, 0)
 	require.NoError(t, err)
-	defer q.Close()
+	defer func() {
+		_ = q.Close()
+	}()
 
 	// start reader
 	var wg sync.WaitGroup
@@ -260,9 +268,11 @@ func TestQueueWriteLoad(t *testing.T) {
 	dataDir := filepath.Join(tmpDir, "pqueue_write_load")
 	_ = os.RemoveAll(dataDir)
 
-	err := os.MkdirAll(dataDir, 0777)
+	err := os.MkdirAll(dataDir, 0o777)
 	require.NoError(t, err)
-	defer os.RemoveAll(dataDir)
+	defer func() {
+		_ = os.RemoveAll(dataDir)
+	}()
 
 	{
 		q, err := New(dataDir, 0)
@@ -321,9 +331,11 @@ func TestQueueWriteLoad(t *testing.T) {
 func TestQueueExample(t *testing.T) {
 	dataDir := filepath.Join(tmpDir, "pqueue_example")
 	_ = os.RemoveAll(dataDir)
-	err := os.MkdirAll(dataDir, 0777)
+	err := os.MkdirAll(dataDir, 0o777)
 	require.NoError(t, err)
-	defer os.RemoveAll(dataDir)
+	defer func() {
+		_ = os.RemoveAll(dataDir)
+	}()
 
 	q, err := New(dataDir, 3)
 	require.NoError(t, err)
@@ -366,9 +378,11 @@ func TestLoadOffsetFile(t *testing.T) {
 func TestQueueCorruptedWritingFile(t *testing.T) {
 	dataDir := filepath.Join(tmpDir, "pqueue_hijack")
 	_ = os.RemoveAll(dataDir)
-	err := os.MkdirAll(dataDir, 0777)
+	err := os.MkdirAll(dataDir, 0o777)
 	require.NoError(t, err)
-	defer os.RemoveAll(dataDir)
+	defer func() {
+		_ = os.RemoveAll(dataDir)
+	}()
 
 	q, err := New(dataDir, 3)
 	require.NoError(t, err)
@@ -376,7 +390,7 @@ func TestQueueCorruptedWritingFile(t *testing.T) {
 	require.NoError(t, q.Enqueue([]byte{1, 2, 3}))
 
 	front := q.(*queue).segments.Front().Value.(*segment)
-	f, err := os.OpenFile(front.path, os.O_RDWR, 0644)
+	f, err := os.OpenFile(front.path, os.O_RDWR, 0o644)
 	require.NoError(t, err)
 	_, err = f.Write([]byte{1, 2, 3, 4, 1, 1, 1, 1})
 	require.NoError(t, err)
