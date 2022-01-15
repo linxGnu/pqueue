@@ -2,9 +2,12 @@ package pqueue
 
 import (
 	"container/list"
+	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -78,4 +81,20 @@ func loadFileInfos(dir string, infoExtractor func(os.DirEntry) (os.FileInfo, err
 
 func fileInfoExtractor(f os.DirEntry) (os.FileInfo, error) {
 	return f.Info()
+}
+
+func createFile(dir, prefix string) (f *os.File, err error) {
+	prefix = path.Join(dir, prefix)
+
+	for attempt := 0; attempt < 10_000; attempt++ {
+		name := prefix + strconv.FormatInt(time.Now().UnixNano(), 10)
+
+		f, err = os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+		if !os.IsExist(err) {
+			return
+		}
+	}
+
+	err = fmt.Errorf("creating file but fail. path: %s", dir)
+	return
 }

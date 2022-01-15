@@ -316,7 +316,7 @@ func (q *queue) enqueueBatch(b entry.Batch) error {
 }
 
 func (q *queue) newSegment() (*segment, error) {
-	f, err := os.CreateTemp(q.settings.DataDir, segPrefix)
+	f, err := createFile(q.settings.DataDir, segPrefix)
 	if err != nil {
 		return nil, err
 	}
