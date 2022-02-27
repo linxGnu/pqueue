@@ -2,7 +2,6 @@ package segv1
 
 import (
 	"io"
-	"sync"
 	"sync/atomic"
 
 	"github.com/linxGnu/pqueue/common"
@@ -16,15 +15,12 @@ type Segment struct {
 	readOnly bool
 
 	entryFormat common.EntryFormat
+	w           entry.Writer
 
-	r          entry.Reader
-	rLock      sync.Mutex
 	offset     uint32
 	numEntries uint32
 	maxEntries uint32
-
-	w     entry.Writer
-	wLock sync.Mutex
+	r          entry.Reader
 }
 
 // NewReadOnlySegment creates new Segment for readonly.
@@ -122,9 +118,6 @@ func (s *Segment) WriteEntry(e entry.Entry) (common.ErrCode, error) {
 }
 
 func (s *Segment) writeEntry(e entry.Entry) (common.ErrCode, error) {
-	s.wLock.Lock()
-	defer s.wLock.Unlock()
-
 	if s.numEntries >= s.maxEntries {
 		return common.SegmentNoMoreWrite, nil
 	}
@@ -148,9 +141,6 @@ func (s *Segment) WriteBatch(b entry.Batch) (common.ErrCode, error) {
 }
 
 func (s *Segment) writeBatch(b entry.Batch) (common.ErrCode, error) {
-	s.wLock.Lock()
-	defer s.wLock.Unlock()
-
 	if s.numEntries >= s.maxEntries {
 		return common.SegmentNoMoreWrite, nil
 	}
@@ -166,9 +156,6 @@ func (s *Segment) writeBatch(b entry.Batch) (common.ErrCode, error) {
 
 // ReadEntry from segment.
 func (s *Segment) ReadEntry(e *entry.Entry) (common.ErrCode, int, error) {
-	s.rLock.Lock()
-	defer s.rLock.Unlock()
-
 	if !s.readOnly {
 		// readable?
 		if s.offset == atomic.LoadUint32(&s.numEntries) {
