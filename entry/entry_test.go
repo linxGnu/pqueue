@@ -139,7 +139,7 @@ func TestEntryMarshal(t *testing.T) {
 	t.Run("UnsupportedFormat", func(t *testing.T) {
 		var e Entry = []byte{1, 2, 3, 4}
 
-		code, err := e.Marshal(nil, 123, true)
+		code, err := e.Marshal(nil, 123)
 		require.Equal(t, common.ErrEntryUnsupportedFormat, err)
 		require.Equal(t, common.EntryUnsupportedFormat, code)
 	})
@@ -147,7 +147,7 @@ func TestEntryMarshal(t *testing.T) {
 	t.Run("ErrorHandling", func(t *testing.T) {
 		var e Entry = []byte{1, 2, 3, 4}
 
-		code, err := e.Marshal(&errorWriter{}, common.EntryV1, true)
+		code, err := e.Marshal(&errorWriter{}, common.EntryV1)
 		require.Equal(t, common.EntryWriteErr, code)
 		require.Error(t, err)
 
@@ -167,7 +167,7 @@ func TestEntryMarshal(t *testing.T) {
 		var e Entry = []byte{1, 2, 3, 4}
 		var buf bytes.Buffer
 
-		code, err := e.Marshal(&noopFlusher{Writer: &buf}, common.EntryV1, true)
+		code, err := e.Marshal(&noopFlusher{Writer: &buf}, common.EntryV1)
 		require.NoError(t, err)
 		require.Equal(t, code, common.NoError)
 		require.EqualValues(t, []byte{0, 0, 0, 4, 0xb6, 0x3c, 0xfb, 0xcd, 1, 2, 3, 4}, buf.Bytes())
@@ -201,7 +201,7 @@ func TestEntry(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	code, err := e.Marshal(&noopFlusher{Writer: &buf}, common.EntryV1, true)
+	code, err := e.Marshal(&noopFlusher{Writer: &buf}, common.EntryV1)
 	require.NoError(t, err)
 	require.Equal(t, common.NoError, code)
 

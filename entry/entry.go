@@ -22,20 +22,14 @@ type Writer interface {
 	WriteBatch(Batch) (common.ErrCode, error)
 }
 
-// WriteFlusher interface.
-type WriteFlusher interface {
-	io.Writer
-	Flush() error
-}
-
 // Entry represents queue entry.
 type Entry []byte
 
 // Marshal writes entry to writer.
-func (e Entry) Marshal(w WriteFlusher, format common.EntryFormat, flushable bool) (code common.ErrCode, err error) {
+func (e Entry) Marshal(w io.Writer, format common.EntryFormat) (code common.ErrCode, err error) {
 	switch format {
 	case common.EntryV1:
-		return e.marshalV1(w, flushable)
+		return e.marshalV1(w)
 
 	default:
 		return common.EntryUnsupportedFormat, common.ErrEntryUnsupportedFormat
@@ -43,15 +37,11 @@ func (e Entry) Marshal(w WriteFlusher, format common.EntryFormat, flushable bool
 }
 
 // [Length - uint32][Checksum - uint32][Payload - bytes]
-func (e Entry) marshalV1(w WriteFlusher, flushable bool) (code common.ErrCode, err error) {
+func (e Entry) marshalV1(w io.Writer) (code common.ErrCode, err error) {
 	var buf [8]byte
 	common.Endianese.PutUint64(buf[:], uint64(len(e))<<32|uint64(crc32.ChecksumIEEE(e)))
 	if _, err = w.Write(buf[:]); err == nil {
-		if _, err = w.Write(e); err == nil {
-			if flushable {
-				err = w.Flush()
-			}
-		}
+		_, err = w.Write(e)
 	}
 
 	if err != nil {
@@ -176,18 +166,12 @@ func (b *Batch) Append(e Entry) {
 }
 
 // Marshal into writer.
-func (b *Batch) Marshal(w WriteFlusher, format common.EntryFormat) (code common.ErrCode, err error) {
+func (b *Batch) Marshal(w io.Writer, format common.EntryFormat) (code common.ErrCode, err error) {
 	if b.Len() > 0 {
 		for _, e := range b.entries {
-			if code, err = e.Marshal(w, format, false); err != nil {
+			if code, err = e.Marshal(w, format); err != nil {
 				return code, err
 			}
-		}
-
-		if err = w.Flush(); err != nil {
-			code = common.EntryWriteErr
-		} else {
-			code = common.NoError
 		}
 	}
 	return
