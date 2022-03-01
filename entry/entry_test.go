@@ -125,12 +125,6 @@ func (e *errorWriter) Write([]byte) (int, error) { return 0, fmt.Errorf("fake er
 
 func (e *errorWriter) Flush() error { return nil }
 
-type errorFlusher struct{}
-
-func (e *errorFlusher) Write([]byte) (int, error) { return 0, nil }
-
-func (e *errorFlusher) Flush() error { return fmt.Errorf("fake error") }
-
 type noopFlusher struct{ io.Writer }
 
 func (f *noopFlusher) Flush() error { return nil }
@@ -153,10 +147,6 @@ func TestEntryMarshal(t *testing.T) {
 
 		batch := NewBatch(2)
 		batch.Append(e)
-
-		code, err = batch.Marshal(&errorFlusher{}, common.EntryV1)
-		require.Equal(t, common.EntryWriteErr, code)
-		require.Error(t, err)
 
 		code, err = batch.Marshal(&errorWriter{}, common.EntryV1)
 		require.Equal(t, common.EntryWriteErr, code)
