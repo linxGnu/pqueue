@@ -2,7 +2,6 @@ package segv1
 
 import (
 	"bytes"
-	"os"
 	"testing"
 
 	"github.com/linxGnu/pqueue/common"
@@ -10,8 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
-
-var tmpDir = os.TempDir()
 
 func TestSegment(t *testing.T) {
 	t.Run("NewSegmentFailure", func(t *testing.T) {
