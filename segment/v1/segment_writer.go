@@ -10,9 +10,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-var (
-	segmentEnding = []byte{0, 0, 0, 0, 0, 0, 0, 0}
-)
+var segmentEnding = []byte{0, 0, 0, 0, 0, 0, 0, 0}
 
 type segmentWriter struct {
 	w           *bufio.Writer
@@ -36,8 +34,10 @@ func (s *segmentWriter) Close() (err error) {
 
 // WriteEntry to underlying writer.
 func (s *segmentWriter) WriteEntry(e entry.Entry) (common.ErrCode, error) {
-	// check size
-	_, err := e.Marshal(s.w, s.entryFormat, true)
+	_, err := e.Marshal(s.w, s.entryFormat)
+	if err == nil {
+		err = s.w.Flush()
+	}
 	if err == nil {
 		return common.NoError, nil
 	}
@@ -47,6 +47,9 @@ func (s *segmentWriter) WriteEntry(e entry.Entry) (common.ErrCode, error) {
 // WriteEntry to underlying writer.
 func (s *segmentWriter) WriteBatch(b entry.Batch) (common.ErrCode, error) {
 	_, err := b.Marshal(s.w, s.entryFormat)
+	if err == nil {
+		err = s.w.Flush()
+	}
 	if err == nil {
 		return common.NoError, nil
 	}

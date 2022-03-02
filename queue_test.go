@@ -148,7 +148,7 @@ func TestQueueRace(t *testing.T) {
 		_ = q.Close()
 	}()
 
-	// start reader
+	// start readers
 	var wg sync.WaitGroup
 
 	collectValue := make([]int, size)
@@ -195,6 +195,7 @@ func TestQueueRace(t *testing.T) {
 		}()
 	}
 
+	// start writers
 	ch := make(chan uint32, 1)
 	for i := 0; i < 4; i++ {
 		wg.Add(1)
