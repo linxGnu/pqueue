@@ -11,7 +11,7 @@
 ## Installation
 
 ```
-go get -u github/linxGnu/pqueue 
+go get -u github.com/linxGnu/pqueue 
 ```
 
 ## Usage
