@@ -1,5 +1,7 @@
 module github.com/linxGnu/pqueue
 
+go 1.17
+
 require (
 	github.com/grandecola/bigqueue v0.5.0
 	github.com/hashicorp/go-multierror v1.1.1
