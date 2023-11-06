@@ -400,3 +400,32 @@ func TestQueueCorruptedWritingFile(t *testing.T) {
 	var e entry.Entry
 	require.False(t, q.Dequeue(&e))
 }
+
+func TestQueueReopen(t *testing.T) {
+	dataDir := filepath.Join(tmpDir, "pqueue_reopen")
+	_ = os.RemoveAll(dataDir)
+	err := os.MkdirAll(dataDir, 0o777)
+	require.NoError(t, err)
+	defer func() {
+		_ = os.RemoveAll(dataDir)
+	}()
+
+	q, err := New(dataDir, 3)
+	require.NoError(t, err)
+
+	require.NoError(t, q.Enqueue([]byte{1, 2, 3}))
+
+	var e entry.Entry
+	require.True(t, q.Dequeue(&e))
+	require.EqualValues(t, e, []byte{1, 2, 3})
+
+	err = q.Close()
+	require.NoError(t, err)
+
+	q, err = New(dataDir, 3)
+	require.NoError(t, err)
+
+	// only one value was enqueued and it was already dequeued, so there shouldn't be anything else
+	require.False(t, q.Dequeue(&e))
+	q.Close()
+}
