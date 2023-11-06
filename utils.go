@@ -59,12 +59,17 @@ func loadFileInfos(dir string, infoExtractor func(os.DirEntry) (os.FileInfo, err
 
 	files := make([]file, 0, len(fileList))
 	for i := range fileList {
-		if strings.HasPrefix(fileList[i].Name(), segPrefix) && !strings.HasSuffix(fileList[i].Name(), segOffsetFileSuffix) {
+		fileName := fileList[i].Name()
+
+		if strings.HasPrefix(fileName, segPrefix) &&
+			!strings.HasSuffix(fileName, segOffsetFileSuffix) {
+			// extract file info
 			info, e := infoExtractor(fileList[i])
 			if e != nil {
 				return nil, e
 			}
 
+			// add to list
 			files = append(files, file{
 				path:    filepath.Join(dir, fileList[i].Name()),
 				modTime: info.ModTime(),
