@@ -59,7 +59,7 @@ func loadFileInfos(dir string, infoExtractor func(os.DirEntry) (os.FileInfo, err
 
 	files := make([]file, 0, len(fileList))
 	for i := range fileList {
-		if strings.HasPrefix(fileList[i].Name(), segPrefix) {
+		if strings.HasPrefix(fileList[i].Name(), segPrefix) && !strings.HasSuffix(fileList[i].Name(), segOffsetFileSuffix) {
 			info, e := infoExtractor(fileList[i])
 			if e != nil {
 				return nil, e
